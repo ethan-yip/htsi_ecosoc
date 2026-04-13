@@ -1,10 +1,39 @@
+// Human-readable label maps
+const ROLE_LABELS: Record<string, string> = {
+  'youth-program-operator': 'Youth Program Operator',
+  'ngo-nonprofit': 'NGO / Nonprofit',
+  'school-university': 'School / University',
+  'startup-builder': 'Startup / Builder',
+  'government-policy': 'Government / Policy',
+  'funder-donor': 'Funder / Donor',
+  'other': 'Other',
+};
+
+const FOCUS_LABELS: Record<string, string> = {
+  'entrepreneurship': 'Entrepreneurship',
+  'education': 'Education',
+  'employment': 'Employment',
+  'peacebuilding-civic-engagement': 'Peacebuilding / Civic Engagement',
+  'technology-innovation': 'Technology / Innovation',
+  'other': 'Other',
+};
+
+const CONSTRAINT_LABELS: Record<string, string> = {
+  'funding': 'Funding',
+  'execution-capacity': 'Execution Capacity',
+  'engagement': 'Engagement',
+  'institutional-support': 'Institutional Support',
+  'training-skills': 'Training / Skills',
+  'other': 'Other',
+};
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '@iconify/react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import Globe from 'react-globe.gl'
 import type { GlobeMethods } from 'react-globe.gl'
 import gsap from 'gsap'
-import { buildCountryClusters, getEntryMetrics } from '../lib/map/clusterEntries'
+import { getEntryMetrics } from '../lib/map/clusterEntries'
+import { getCountryCentroid } from '../lib/map/countryCentroids'
 import { useEntries } from '../lib/supabase/useEntries'
 import type { CountryCluster } from '../lib/map/clusterEntries'
 
@@ -28,8 +57,67 @@ function MapPage() {
   const metricsRef = useRef<HTMLDivElement>(null)
   const globeContainerRef = useRef<HTMLDivElement>(null)
 
-  const clusters = useMemo(() => buildCountryClusters(entries), [entries])
+  // Each entry gets a lat/lng at the country centroid
+  // Add a small random offset to each entry's lat/lng to avoid perfect overlap
+  // Type for entries with lat/lng
+  type EntryWithCoords = typeof entries[number] & { lat: number; lng: number };
+  const entryPoints = useMemo<EntryWithCoords[]>(() => {
+    // Group entries by country for spiral spreading
+    const grouped: Record<string, EntryWithCoords[]> = {};
+    for (const entry of entries) {
+      if (!grouped[entry.country]) grouped[entry.country] = [];
+      // We'll add lat/lng later
+      grouped[entry.country].push(entry as EntryWithCoords);
+    }
+    const points: EntryWithCoords[] = [];
+    // The visual size of a point in degrees (approximate, since pointRadius is in globe units)
+    const pointVisualRadius = 0.45 * 2.5; // pointRadius * fudge factor for globe scale
+    for (const country in grouped) {
+      const cluster = grouped[country];
+      const centroid = getCountryCentroid(country);
+      if (!centroid) continue;
+      const n = cluster.length;
+      // Spiral: golden angle
+      const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+      // Minimum spiral radius to avoid overlap: scale with point size and cluster size
+      const minSpiralRadius = Math.max(pointVisualRadius * 1.1, 0.18); // ensure at least 1.1x point size
+      const maxSpiralRadius = 0.45 + Math.log2(n + 1) * 0.18; // scale with cluster size
+      for (let i = 0; i < n; i++) {
+        const entry = cluster[i];
+        // Spread out in a spiral, radius increases with sqrt(i)
+        const angle = i * goldenAngle;
+        // Use sqrt for even distribution, interpolate between min and max spiral radius
+        const radius = minSpiralRadius + (maxSpiralRadius - minSpiralRadius) * Math.sqrt(i / Math.max(1, n - 1));
+        const dLat = Math.cos(angle) * radius;
+        const dLng = Math.sin(angle) * radius;
+        points.push({ ...entry, lat: centroid.lat + dLat, lng: centroid.lng + dLng });
+      }
+    }
+    return points;
+  }, [entries]);
+
+  // For country selection, build a quick lookup
+  const countryMeta = useMemo(() => {
+    const map = new Map<string, { count: number; totalReach: number; entries: typeof entryPoints }>()
+    for (const entry of entryPoints) {
+      if (!entry) continue
+      const arr = map.get(entry.country)
+      if (arr) {
+        arr.count++
+        arr.totalReach += entry.estimatedReach
+        arr.entries.push(entry)
+      } else {
+        map.set(entry.country, { count: 1, totalReach: entry.estimatedReach, entries: [entry] })
+      }
+    }
+    return map
+  }, [entryPoints])
+
   const metrics = useMemo(() => getEntryMetrics(entries), [entries])
+
+  // Selection: either an entry (by id) or a country (by name)
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
 
   const animateBackToHome = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
@@ -168,17 +256,21 @@ function MapPage() {
               backgroundColor="rgba(0,0,0,0)"
               globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
               bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-              pointsData={clusters}
+              pointsData={entryPoints}
               pointLat="lat"
               pointLng="lng"
-              pointColor="color"
-              pointRadius={(point) => Math.min(3.2, 0.7 + (point as CountryCluster).count * 0.16)}
-              pointAltitude={(point) => Math.min(0.22, 0.03 + (point as CountryCluster).count * 0.008)}
+              pointColor={() => '#3d6ec9'}
+              pointRadius={0.45}
+              pointAltitude={0.04}
               pointLabel={(point) => {
-                const item = point as CountryCluster
-                return `${item.country}: ${item.count} entr${item.count === 1 ? 'y' : 'ies'}`
+                const entry = point as typeof entryPoints[number]
+                return `${entry.organizationName || 'Untitled Organization'}\n${entry.country}`
               }}
-              onPointClick={(point) => setSelectedCluster(point as CountryCluster)}
+              onPointClick={(point) => {
+                const entry = point as typeof entryPoints[number]
+                setSelectedEntryId(entry.id)
+                setSelectedCountry(null)
+              }}
             />
           </div>
         )}
@@ -226,34 +318,80 @@ function MapPage() {
 
         <aside ref={sidebarRef} className="pointer-events-auto absolute bottom-0 left-0 top-0 hidden w-[285px] overflow-y-auto m-3 rounded-[20px] bg-[rgba(255,255,255,0.08)] p-5 backdrop-blur-[30px] md:block">
           <h2 className="mb-3 text-base font-semibold text-white">Details</h2>
-
-          {!selectedCluster ? (
-            <p className="text-sm text-[#c4d0e8]">Click a country point to view entry details.</p>
+          {/* Country selection UI */}
+          <div className="mb-3">
+            <label className="block text-xs text-[#b8c5df] mb-1">Select Country</label>
+            <select
+              className="w-full rounded bg-[#232b3a] text-white text-sm p-1 mb-2"
+              value={selectedCountry || ''}
+              onChange={e => {
+                setSelectedCountry(e.target.value || null)
+                setSelectedEntryId(null)
+              }}
+            >
+              <option value="">--</option>
+              {[...countryMeta.keys()].sort().map(country => (
+                <option key={country} value={country}>{country}</option>
+              ))}
+            </select>
+          </div>
+          {!selectedEntryId && !selectedCountry ? (
+            <p className="text-sm text-[#c4d0e8]">Click a point to view entry details, or select a country for summary.</p>
+          ) : selectedEntryId ? (
+            (() => {
+              const entry = entryPoints.find(e => e.id === selectedEntryId)
+              if (!entry) return <p className="text-sm text-[#c4d0e8]">Entry not found.</p>
+              return (
+                <article className="rounded-lg bg-white/5 p-3 flex flex-col gap-1">
+                  <p className="text-sm font-bold text-white whitespace-pre-line">{entry.organizationName || 'Untitled Organization'}</p>
+                  {entry.organizationDescription && (
+                    <p className="text-xs text-[#e0e0e0] italic mb-1 whitespace-pre-line">{entry.organizationDescription}</p>
+                  )}
+                  <ul className="mt-1 mb-1 space-y-1 text-xs text-[#c4d0e8]">
+                    <li><span className="font-semibold text-[#f2b223]">{CONSTRAINT_LABELS[entry.primaryConstraint] || entry.primaryConstraint}</span></li>
+                    <li>{ROLE_LABELS[entry.roleType] || entry.roleType}</li>
+                    <li>{FOCUS_LABELS[entry.focusArea] || entry.focusArea}</li>
+                    {entry.estimatedReach > 0 && <li><span className="text-[#b8e986]">Reach: {formatNumber(entry.estimatedReach)}</span></li>}
+                  </ul>
+                  {entry.contact && (
+                    <div className="pt-1 mt-1 border-t border-white/10">
+                      <span className="text-xs text-[#d9e7ff] break-all">{entry.contact}</span>
+                    </div>
+                  )}
+                </article>
+              )
+            })()
           ) : (
-            <div className="space-y-3">
-              <div className="rounded-lg bg-white/5 p-3">
-                <p className="text-xs text-[#c4d0e8]">Country</p>
-                <p className="text-base font-semibold text-white">{selectedCluster.country}</p>
-              </div>
-              <div className="rounded-lg bg-white/5 p-3">
-                <p className="text-xs text-[#c4d0e8]">Entries</p>
-                <p className="text-base font-semibold text-white">{formatNumber(selectedCluster.count)}</p>
-              </div>
-              <div className="rounded-lg bg-white/5 p-3">
-                <p className="text-xs text-[#c4d0e8]">Estimated Reach</p>
-                <p className="text-base font-semibold text-white">{formatNumber(selectedCluster.totalReach)}</p>
-              </div>
-
-              <div className="space-y-2">
-                {selectedCluster.entries.map((entry) => (
-                  <article key={entry.id} className="rounded-lg bg-white/5 p-3">
-                    <p className="text-sm font-medium text-white">{entry.organizationName || 'Untitled Organization'}</p>
-                    <p className="text-xs text-[#c4d0e8]">{entry.primaryConstraint} • {entry.roleType} • {entry.focusArea}</p>
-                    {entry.contact && <p className="text-xs text-[#d9e7ff]">{entry.contact}</p>}
-                  </article>
-                ))}
-              </div>
-            </div>
+            (() => {
+              const meta = countryMeta.get(selectedCountry!)
+              if (!meta) return <p className="text-sm text-[#c4d0e8]">Country not found.</p>
+              return (
+                <div className="space-y-3">
+                  <div className="rounded-lg bg-white/5 p-3">
+                    <p className="text-xs text-[#c4d0e8]">Country</p>
+                    <p className="text-base font-semibold text-white">{selectedCountry}</p>
+                  </div>
+                  <div className="rounded-lg bg-white/5 p-3">
+                    <p className="text-xs text-[#c4d0e8]">Entries</p>
+                    <p className="text-base font-semibold text-white">{formatNumber(meta.count)}</p>
+                  </div>
+                  <div className="rounded-lg bg-white/5 p-3">
+                    <p className="text-xs text-[#c4d0e8]">Estimated Reach</p>
+                    <p className="text-base font-semibold text-white">{formatNumber(meta.totalReach)}</p>
+                  </div>
+                  <div className="space-y-3">
+                    {meta.entries.map((entry) => (
+                      entry && (
+                        <article key={entry.id} className="rounded-lg bg-white/10 p-2 flex flex-col gap-1">
+                          <span className="text-xs text-white font-semibold">{entry.organizationName || 'Untitled Organization'}</span>
+                          <span className="text-xs text-[#c4d0e8]">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
+                        </article>
+                      )
+                    ))}
+                  </div>
+                </div>
+              )
+            })()
           )}
         </aside>
 
@@ -335,10 +473,22 @@ function MapPage() {
 
                 <div className="max-h-[30dvh] space-y-2 overflow-y-auto pr-1">
                   {selectedCluster.entries.map((entry) => (
-                    <article key={entry.id} className="rounded-lg  bg-white/5 p-3">
-                      <p className="text-sm font-medium text-white">{entry.organizationName || 'Untitled Organization'}</p>
-                      <p className="text-xs text-[#c4d0e8]">{entry.primaryConstraint} • {entry.roleType} • {entry.focusArea}</p>
-                      {entry.contact && <p className="text-xs text-[#d9e7ff]">{entry.contact}</p>}
+                    <article key={entry.id} className="rounded-lg bg-white/5 p-3 flex flex-col gap-1">
+                      <p className="text-sm font-bold text-white whitespace-pre-line">{entry.organizationName || 'Untitled Organization'}</p>
+                      {entry.organizationDescription && (
+                        <p className="text-xs text-[#e0e0e0] italic mb-1 whitespace-pre-line">{entry.organizationDescription}</p>
+                      )}
+                      <ul className="mt-1 mb-1 space-y-1 text-xs text-[#c4d0e8]">
+                        <li><span className="font-semibold text-[#f2b223]">{CONSTRAINT_LABELS[entry.primaryConstraint] || entry.primaryConstraint}</span></li>
+                        <li>{ROLE_LABELS[entry.roleType] || entry.roleType}</li>
+                        <li>{FOCUS_LABELS[entry.focusArea] || entry.focusArea}</li>
+                        {entry.estimatedReach > 0 && <li><span className="text-[#b8e986]">Reach: {formatNumber(entry.estimatedReach)}</span></li>}
+                      </ul>
+                      {entry.contact && (
+                        <div className="pt-1 mt-1 border-t border-white/10">
+                          <span className="text-xs text-[#d9e7ff] break-all">{entry.contact}</span>
+                        </div>
+                      )}
                     </article>
                   ))}
                 </div>
