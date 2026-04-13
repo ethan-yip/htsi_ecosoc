@@ -11,6 +11,7 @@ function parseEstimatedReach(value: string): number {
 function toInsertPayload(formState: FormState): EntryInsert {
   return {
     country: formState.country,
+    state: formState.country === 'United States' ? formState.state : null,
     role_type: formState.roleType,
     focus_area: formState.focusArea,
     primary_constraint: formState.primaryConstraint,
@@ -25,6 +26,7 @@ function toDomainModel(row: EntryRow): EntryDomainModel {
   return {
     id: row.id,
     country: row.country,
+    state: row.state ?? '',
     roleType: row.role_type,
     focusArea: row.focus_area,
     primaryConstraint: row.primary_constraint,

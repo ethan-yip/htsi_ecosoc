@@ -6,6 +6,7 @@ export const ENTRY_TABLE_NAME = 'entries'
 export interface EntryRow {
   id: string
   country: string
+  state: string | null
   role_type: FormState['roleType']
   focus_area: FormState['focusArea']
   primary_constraint: FormState['primaryConstraint']
@@ -21,6 +22,7 @@ export type EntryInsert = Omit<EntryRow, 'id' | 'created_at'>
 export interface EntryDomainModel {
   id: string
   country: string
+  state: string
   roleType: FormState['roleType']
   focusArea: FormState['focusArea']
   primaryConstraint: FormState['primaryConstraint']

@@ -1,6 +1,7 @@
 
 export interface FormState {
   country: string // '' means not selected
+  state: string // '' means not selected, only used if country is United States
   organizationName: string
   roleType: '' | 'youth-program-operator' | 'ngo-nonprofit' | 'school-university' | 'startup-builder' | 'government-policy' | 'funder-donor' | 'other'
   focusArea: '' | 'entrepreneurship' | 'education' | 'employment' | 'peacebuilding-civic-engagement' | 'technology-innovation' | 'other'
@@ -17,6 +18,7 @@ export type PrimaryConstraint = FormState['primaryConstraint']
 
 export const initialFormState: FormState = {
   country: '',
+  state: '',
   organizationName: '',
   roleType: '',
   focusArea: '',

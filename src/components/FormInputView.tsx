@@ -1,3 +1,4 @@
+import usStates from '../data/us_states.json'
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '@iconify/react'
 import { useFormContext } from '../lib/form/useFormContext'
@@ -118,8 +119,20 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
                 </div>
                 <CountrySelector
                   value={formState.country}
-                  onChange={(value) => updateFormState({ country: value })}
+                  onChange={(value) => {
+                    updateFormState({ country: value, state: '' })
+                  }}
                 />
+                {formState.country === 'United States' && (
+                  <div className="mt-3">
+                    <OptionDropdown
+                      label={<span>State <span className="text-[#e57373]">*</span></span>}
+                      options={usStates}
+                      value={formState.state}
+                      onChange={id => updateFormState({ state: id })}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Role Type */}
