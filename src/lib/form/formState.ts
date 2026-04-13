@@ -7,6 +7,7 @@ export interface FormState {
   primaryConstraint: '' | 'funding' | 'execution-capacity' | 'engagement' | 'institutional-support' | 'training-skills' | 'other'
   estimatedYouthReach: string
   contact: string
+  description: string // Optional description for the organization
 }
 
 
@@ -22,4 +23,5 @@ export const initialFormState: FormState = {
   primaryConstraint: '',
   estimatedYouthReach: '',
   contact: '',
+  description: '',
 }

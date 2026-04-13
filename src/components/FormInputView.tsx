@@ -122,16 +122,7 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
                 />
               </div>
 
-              {/* Organization / Initiative Name */}
-              <TextInput
-                label="Organization / Initiative Name"
-                placeholder="Optional, but important"
-                value={formState.organizationName}
-                onChange={(value) => updateFormState({ organizationName: value })}
-              />
-
               {/* Role Type */}
-
               <ButtonGroup
                 label={<span>Which best describes your role? <span className="text-[#e57373]">*</span></span>}
                 options={ROLE_OPTIONS}
@@ -141,7 +132,6 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
               />
 
               {/* Primary Focus Area */}
-
               <ButtonGroup
                 label={<span>What is your main focus? <span className="text-[#e57373]">*</span></span>}
                 options={FOCUS_AREA_OPTIONS}
@@ -149,6 +139,31 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
                 onSelect={(id) => updateFormState({ focusArea: id as FocusArea })}
                 compactWrap
               />
+
+              {/* Organization / Initiative Name */}
+              <TextInput
+                label="Organization / Initiative Name"
+                placeholder="Optional, but important"
+                value={formState.organizationName}
+                onChange={(value) => updateFormState({ organizationName: value })}
+                isOptional
+              />
+
+              {/* Organization Description */}
+              <div className="w-full">
+                <div className="mb-2 flex items-baseline gap-1">
+                  <p className="text-sm font-bold text-[#b3b3b3]">Description</p>
+                  <span className="text-xs font-light text-[#b3b3b3]">(Optional)</span>
+                </div>
+                <textarea
+                  id="org-description"
+                  value={formState.description}
+                  onChange={e => updateFormState({ description: e.target.value })}
+                  placeholder="Describe your organization or initiative (optional)"
+                  rows={4}
+                  className="w-full rounded-[10px] border border-transparent bg-[rgba(255,255,255,0.15)] px-4 py-3 text-sm font-normal text-white placeholder-[#8b8b8b] outline-none transition-all hover:border-[rgba(255,255,255,0.25)] focus:border-[#3d6ec9] focus:bg-[rgba(255,255,255,0.2)] resize-vertical min-h-[70px]"
+                />
+              </div>
 
               {/* Primary Constraint */}
               <OptionDropdown
@@ -164,6 +179,7 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
                 placeholder="Optional"
                 value={formState.estimatedYouthReach}
                 onChange={(value) => updateFormState({ estimatedYouthReach: value })}
+                isOptional
               />
 
               {/* Contact */}
