@@ -9,7 +9,7 @@ const configDir = dirname(fileURLToPath(import.meta.url))
 // https://vite.dev/config/
 export default defineConfig({
   root: configDir,
-  base: '/ECOSOC-Presentation/',
+  base: '/',
   plugins: [react(), tailwindcss()],
   server: {
     allowedHosts: true
