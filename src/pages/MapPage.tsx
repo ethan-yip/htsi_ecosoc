@@ -224,29 +224,29 @@ function MapPage() {
 
       <section className="pointer-events-none relative z-10 h-full px-4 pb-4 pt-36 md:px-6 md:pb-6 md:pt-40">
 
-        <aside ref={sidebarRef} className="pointer-events-auto absolute bottom-0 left-0 top-0 hidden w-[285px] overflow-y-auto rounded-[25px] border border-white/10 bg-[rgba(255,255,255,0.12)] p-5 backdrop-blur-[18px] md:block">
+        <aside ref={sidebarRef} className="pointer-events-auto absolute bottom-0 left-0 top-0 hidden w-[285px] overflow-y-auto m-3 rounded-[20px] bg-[rgba(255,255,255,0.08)] p-5 backdrop-blur-[30px] md:block">
           <h2 className="mb-3 text-base font-semibold text-white">Details</h2>
 
           {!selectedCluster ? (
             <p className="text-sm text-[#c4d0e8]">Click a country point to view entry details.</p>
           ) : (
             <div className="space-y-3">
-              <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+              <div className="rounded-lg bg-white/5 p-3">
                 <p className="text-xs text-[#c4d0e8]">Country</p>
                 <p className="text-base font-semibold text-white">{selectedCluster.country}</p>
               </div>
-              <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+              <div className="rounded-lg bg-white/5 p-3">
                 <p className="text-xs text-[#c4d0e8]">Entries</p>
                 <p className="text-base font-semibold text-white">{formatNumber(selectedCluster.count)}</p>
               </div>
-              <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+              <div className="rounded-lg bg-white/5 p-3">
                 <p className="text-xs text-[#c4d0e8]">Estimated Reach</p>
                 <p className="text-base font-semibold text-white">{formatNumber(selectedCluster.totalReach)}</p>
               </div>
 
               <div className="space-y-2">
                 {selectedCluster.entries.map((entry) => (
-                  <article key={entry.id} className="rounded-lg border border-white/10 bg-white/5 p-3">
+                  <article key={entry.id} className="rounded-lg bg-white/5 p-3">
                     <p className="text-sm font-medium text-white">{entry.organizationName || 'Untitled Organization'}</p>
                     <p className="text-xs text-[#c4d0e8]">{entry.primaryConstraint} • {entry.roleType} • {entry.focusArea}</p>
                     {entry.contact && <p className="text-xs text-[#d9e7ff]">{entry.contact}</p>}
@@ -259,15 +259,15 @@ function MapPage() {
 
         {/* Desktop metrics group (bottom right, desktop only, fixed) */}
         <div className="hidden md:fixed md:bottom-6 md:right-6 md:z-30 md:flex md:flex-row md:gap-3 md:max-w-[560px]">
-          <div className="rounded-lg border border-white/10 bg-[rgba(255,255,255,0.12)] px-5 py-3 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white text-center min-w-[110px]">
+          <div className="rounded-lg bg-[rgba(255,255,255,0.12)] px-5 py-3 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white text-center min-w-[110px]">
             <div className="text-xs text-[#9fb0d0]">Total Entries</div>
             <div className="text-lg font-bold text-white">{formatNumber(metrics.totalEntries)}</div>
           </div>
-          <div className="rounded-lg border border-white/10 bg-[rgba(255,255,255,0.12)] px-5 py-3 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white text-center min-w-[110px]">
+          <div className="rounded-lg bg-[rgba(255,255,255,0.12)] px-5 py-3 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white text-center min-w-[110px]">
             <div className="text-xs text-[#9fb0d0]">Estimated Reach</div>
             <div className="text-lg font-bold text-white">{formatNumber(metrics.totalReach)}</div>
           </div>
-          <div className="rounded-lg border border-white/10 bg-[rgba(255,255,255,0.12)] px-5 py-3 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white text-center min-w-[110px]">
+          <div className="rounded-lg bg-[rgba(255,255,255,0.12)] px-5 py-3 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white text-center min-w-[110px]">
             <div className="text-xs text-[#9fb0d0]">Countries</div>
             <div className="text-lg font-bold text-white">{formatNumber(metrics.countryCount)}</div>
           </div>
@@ -285,22 +285,22 @@ function MapPage() {
             ref={metricsRef}
             className="pointer-events-none mb-2 flex w-[calc(100vw-32px)] max-w-[560px] flex-row items-end justify-center gap-2"
           >
-            <div className="rounded-[10px] border border-white/10 bg-[rgba(255,255,255,0.12)] px-3 py-2 flex flex-row items-center justify-between gap-2 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white">
+            <div className="rounded-[10px]  bg-[rgba(255,255,255,0.12)] px-3 py-2 flex flex-row items-center justify-between gap-2 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white">
               <span className="text-[11px] text-[#9fb0d0]">Total Entries</span>
               <span className="ml-2 text-base font-bold text-white">{formatNumber(metrics.totalEntries)}</span>
             </div>
-            <div className="rounded-[10px] border border-white/10 bg-[rgba(255,255,255,0.12)] px-3 py-2 flex flex-row items-center justify-between gap-2 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white">
+            <div className="rounded-[10px]  bg-[rgba(255,255,255,0.12)] px-3 py-2 flex flex-row items-center justify-between gap-2 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white">
               <span className="text-[11px] text-[#9fb0d0]">Estimated Reach</span>
               <span className="ml-2 text-base font-bold text-white">{formatNumber(metrics.totalReach)}</span>
             </div>
-            <div className="rounded-[10px] border border-white/10 bg-[rgba(255,255,255,0.12)] px-3 py-2 flex flex-row items-center justify-between gap-2 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white">
+            <div className="rounded-[10px]  bg-[rgba(255,255,255,0.12)] px-3 py-2 flex flex-row items-center justify-between gap-2 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white">
               <span className="text-[11px] text-[#9fb0d0]">Countries</span>
               <span className="ml-2 text-base font-bold text-white">{formatNumber(metrics.countryCount)}</span>
             </div>
           </div>
           
           <aside
-            className="pointer-events-auto w-[calc(100vw-24px)] max-w-[560px] rounded-[22px] border border-white/10 bg-[rgba(255,255,255,0.12)] p-4 backdrop-blur-[18px] md:hidden"
+            className="pointer-events-auto w-[calc(100vw-24px)] max-w-[560px] rounded-t-[22px]  bg-[rgba(255,255,255,0.12)] p-4 backdrop-blur-[18px] md:hidden"
           >
             <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-white/35" />
 
@@ -323,11 +323,11 @@ function MapPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-2.5">
+                  <div className="rounded-lg  bg-white/5 p-2.5">
                     <p className="text-[11px] text-[#c4d0e8]">Entries</p>
                     <p className="text-sm font-semibold text-white">{formatNumber(selectedCluster.count)}</p>
                   </div>
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-2.5">
+                  <div className="rounded-lg  bg-white/5 p-2.5">
                     <p className="text-[11px] text-[#c4d0e8]">Est. Reach</p>
                     <p className="text-sm font-semibold text-white">{formatNumber(selectedCluster.totalReach)}</p>
                   </div>
@@ -335,7 +335,7 @@ function MapPage() {
 
                 <div className="max-h-[30dvh] space-y-2 overflow-y-auto pr-1">
                   {selectedCluster.entries.map((entry) => (
-                    <article key={entry.id} className="rounded-lg border border-white/10 bg-white/5 p-3">
+                    <article key={entry.id} className="rounded-lg  bg-white/5 p-3">
                       <p className="text-sm font-medium text-white">{entry.organizationName || 'Untitled Organization'}</p>
                       <p className="text-xs text-[#c4d0e8]">{entry.primaryConstraint} • {entry.roleType} • {entry.focusArea}</p>
                       {entry.contact && <p className="text-xs text-[#d9e7ff]">{entry.contact}</p>}
