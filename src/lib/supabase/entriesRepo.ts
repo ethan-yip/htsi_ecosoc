@@ -15,6 +15,7 @@ function toInsertPayload(formState: FormState): EntryInsert {
     focus_area: formState.focusArea,
     primary_constraint: formState.primaryConstraint,
     organization_name: formState.organizationName,
+    organization_description: formState.description,
     estimated_reach: parseEstimatedReach(formState.estimatedYouthReach),
     contact: formState.contact.trim() ? formState.contact : null,
   }
@@ -28,6 +29,7 @@ function toDomainModel(row: EntryRow): EntryDomainModel {
     focusArea: row.focus_area,
     primaryConstraint: row.primary_constraint,
     organizationName: row.organization_name,
+    organizationDescription: row.organization_description,
     estimatedReach: row.estimated_reach,
     contact: row.contact ?? '',
     createdAt: row.created_at,

@@ -2,6 +2,7 @@ import type { FormState } from '../form/formState'
 
 export const ENTRY_TABLE_NAME = 'entries'
 
+
 export interface EntryRow {
   id: string
   country: string
@@ -9,6 +10,7 @@ export interface EntryRow {
   focus_area: FormState['focusArea']
   primary_constraint: FormState['primaryConstraint']
   organization_name: string
+  organization_description: string
   estimated_reach: number
   contact: string | null
   created_at: string
@@ -23,6 +25,7 @@ export interface EntryDomainModel {
   focusArea: FormState['focusArea']
   primaryConstraint: FormState['primaryConstraint']
   organizationName: string
+  organizationDescription: string
   estimatedReach: number
   contact: string
   createdAt: string

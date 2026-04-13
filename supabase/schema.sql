@@ -5,6 +5,7 @@ create table if not exists public.entries (
   focus_area text not null check (focus_area in ('entrepreneurship', 'education', 'employment', 'peacebuilding-civic-engagement', 'technology-innovation', 'other')),
   primary_constraint text not null check (primary_constraint in ('funding', 'execution-capacity', 'engagement', 'institutional-support', 'training-skills', 'other')),
   organization_name text not null default '',
+  organization_description text not null default '',
   estimated_reach bigint not null default 0,
   contact text,
   created_at timestamptz not null default now()
