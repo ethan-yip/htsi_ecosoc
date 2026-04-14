@@ -1,14 +1,14 @@
-import type { PrimaryConstraint } from '../form/formState'
+import type { FocusArea } from '../form/formState'
 import type { EntryDomainModel } from '../supabase/types'
 import { getCountryByCode, getStateByCode } from './countryCentroids'
 
-export const CONSTRAINT_COLOR: Record<PrimaryConstraint, string> = {
-   '': '#bdbdbd', // or any neutral/placeholder color
-   'funding': '#f2b223',
-   'execution-capacity': '#22b2f2',
-   'engagement': '#56d66a',
-   'institutional-support': '#9f7be8',
-   'training-skills': '#f27f22',
+export const FOCUS_COLOR: Record<FocusArea, string> = {
+   '': '#bdbdbd',
+   'entrepreneurship': '#f2b223',
+   'education': '#22b2f2',
+   'employment': '#56d66a',
+   'peacebuilding-civic-engagement': '#9f7be8',
+   'technology-innovation': '#f27f22',
    'other': '#a0a0a0',
 }
 
@@ -20,7 +20,7 @@ export interface CountryCluster {
   count: number
   totalReach: number
   entries: EntryDomainModel[]
-  dominantConstraint: PrimaryConstraint
+  dominantFocus: FocusArea
   color: string
 }
 
@@ -30,24 +30,24 @@ export interface EntryMetrics {
   countryCount: number
 }
 
-function getDominantConstraint(entries: EntryDomainModel[]): PrimaryConstraint {
-  const counts: Record<PrimaryConstraint, number> = {
+function getDominantFocus(entries: EntryDomainModel[]): FocusArea {
+  const counts: Record<FocusArea, number> = {
     '': 0,
-    funding: 0,
-    'execution-capacity': 0,
-    engagement: 0,
-    'institutional-support': 0,
-    'training-skills': 0,
-    other: 0,
+    'entrepreneurship': 0,
+    'education': 0,
+    'employment': 0,
+    'peacebuilding-civic-engagement': 0,
+    'technology-innovation': 0,
+    'other': 0,
   }
 
   for (const entry of entries) {
-    counts[entry.primaryConstraint] += 1
+    counts[entry.focusArea] += 1
   }
 
-  return (Object.keys(counts) as PrimaryConstraint[]).reduce((currentBest, candidate) => {
+  return (Object.keys(counts) as FocusArea[]).reduce((currentBest, candidate) => {
     return counts[candidate] > counts[currentBest] ? candidate : currentBest
-  }, 'funding')
+  }, 'education')
 }
 
 export function buildCountryClusters(entries: EntryDomainModel[]): CountryCluster[] {
@@ -84,7 +84,7 @@ export function buildCountryClusters(entries: EntryDomainModel[]): CountryCluste
         }
       }
 
-    const dominantConstraint = getDominantConstraint(groupedEntries)
+    const dominantFocus = getDominantFocus(groupedEntries)
     const totalReach = groupedEntries.reduce((sum, item) => sum + item.estimatedReach, 0)
 
     clusters.push({
@@ -95,8 +95,8 @@ export function buildCountryClusters(entries: EntryDomainModel[]): CountryCluste
       count: groupedEntries.length,
       totalReach,
       entries: groupedEntries,
-      dominantConstraint,
-      color: CONSTRAINT_COLOR[dominantConstraint],
+      dominantFocus,
+      color: FOCUS_COLOR[dominantFocus],
     })
   }
 

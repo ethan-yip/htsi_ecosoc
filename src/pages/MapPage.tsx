@@ -32,7 +32,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import Globe from 'react-globe.gl'
 import type { GlobeMethods } from 'react-globe.gl'
 import gsap from 'gsap'
-import { getEntryMetrics } from '../lib/map/clusterEntries'
+import { getEntryMetrics, FOCUS_COLOR } from '../lib/map/clusterEntries'
 import { getCountryByCode, getStateByCode } from '../lib/map/countryCentroids'
 import { useEntries } from '../lib/supabase/useEntries'
 import type { CountryCluster } from '../lib/map/clusterEntries'
@@ -60,7 +60,7 @@ function MapPage() {
   // Each entry gets a lat/lng at the country/state centroid
   // Add a small random offset to each entry's lat/lng to avoid perfect overlap
   // Type for entries with lat/lng
-  type EntryWithCoords = typeof entries[number] & { lat: number; lng: number; countryName: string; stateName?: string };
+  type EntryWithCoords = typeof entries[number] & { lat: number; lng: number; countryName: string; stateName?: string; color: string };
   const entryPoints = useMemo<EntryWithCoords[]>(() => {
     // Group entries by country + state for spiral spreading
     const grouped: Record<string, EntryWithCoords[]> = {};
@@ -117,7 +117,8 @@ function MapPage() {
           lat: lat + dLat, 
           lng: lng + dLng, 
           countryName: country.name,
-          stateName
+          stateName,
+          color: FOCUS_COLOR[entry.focusArea]
         });
       }
     }
@@ -287,7 +288,7 @@ function MapPage() {
               pointsData={entryPoints}
               pointLat="lat"
               pointLng="lng"
-              pointColor={() => '#3d6ec9'}
+              pointColor="color"
               pointRadius={0.45}
               pointAltitude={0.04}
               pointLabel={(point) => {
@@ -297,7 +298,7 @@ function MapPage() {
               onPointClick={(point) => {
                 const entry = point as typeof entryPoints[number]
                 setSelectedEntryId(entry.id)
-                setSelectedCountry(null)
+                setSelectedCountry(entry.countryName)
               }}
             />
           </div>
@@ -346,25 +347,8 @@ function MapPage() {
 
         <aside ref={sidebarRef} className="pointer-events-auto absolute bottom-0 left-0 top-0 hidden w-[285px] overflow-y-auto m-3 rounded-[20px] bg-[rgba(255,255,255,0.08)] p-5 backdrop-blur-[30px] md:block">
           <h2 className="mb-3 text-base font-semibold text-white">Details</h2>
-          {/* Country selection UI */}
-          <div className="mb-3">
-            <label className="block text-xs text-[#b8c5df] mb-1">Select Country</label>
-            <select
-              className="w-full rounded bg-[#232b3a] text-white text-sm p-1 mb-2"
-              value={selectedCountry || ''}
-              onChange={e => {
-                setSelectedCountry(e.target.value || null)
-                setSelectedEntryId(null)
-              }}
-            >
-              <option value="">--</option>
-              {[...countryMeta.keys()].sort().map(country => (
-                <option key={country} value={country}>{country}</option>
-              ))}
-            </select>
-          </div>
           {!selectedEntryId && !selectedCountry ? (
-            <p className="text-sm text-[#c4d0e8]">Click a point to view entry details, or select a country for summary.</p>
+            <p className="text-sm text-[#c4d0e8]">Click a point to view entry details.</p>
           ) : selectedEntryId ? (
             (() => {
               const entry = entryPoints.find(e => e.id === selectedEntryId)
