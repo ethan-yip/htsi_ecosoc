@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Icon } from '@iconify/react'
-import { useLocation, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import gsap from 'gsap'
 import { FormProvider } from '../lib/form/FormContext'
 import { FormInputView } from '../components/FormInputView'
@@ -87,6 +87,12 @@ function InputPage() {
   return (
     <main className="relative h-dvh overflow-hidden bg-[#1b1b1b]">
       <div ref={topBarRef} className="absolute inset-x-0 top-0 z-20 flex h-[8vh] w-full items-center justify-center bg-[rgba(255,255,255,0.1)] md:hidden">
+        <Link
+          to="/"
+          className="absolute left-3 z-20 sm:hidden items-center gap-2 rounded-lg bg-white/10 p-2 text-sm font-medium text-[#e0e0e0] transition hover:bg-white/20 md:inline-flex"
+        >
+          <Icon icon="mdi:arrow-left" className="h-4 w-4" />
+        </Link>
         <h1 className="px-6 py-4 text-lg font-bold text-white">Map App Thingy</h1>
       </div>
 
@@ -98,6 +104,16 @@ function InputPage() {
 
       <div ref={footerRef} className="absolute inset-x-0 bottom-0 h-[8vh] w-full bg-[rgba(255,255,255,0.1)] md:hidden">
         <div className="mx-auto flex h-full w-full max-w-[430px] items-center justify-around px-6">
+           <button
+            onClick={() => handleTabChange('map')}
+            className={`flex h-[46px] w-16 items-center justify-center rounded-[20px] transition-all ${
+              activeTab === 'map' ? 'bg-[rgba(255,255,255,0.1)] text-[#f2f2f2]' : 'text-[#8e8e8e]'
+            }`}
+            aria-label="Map"
+            disabled={isTransitioning}
+          >
+            <Icon icon="mdi-light:map-marker" className="h-8 w-8 shrink-0" />
+          </button>
           <button
             onClick={() => handleTabChange('input')}
             className={`flex h-[46px] w-16 items-center justify-center rounded-[20px] transition-all ${
@@ -107,17 +123,6 @@ function InputPage() {
             disabled={isTransitioning}
           >
             <Icon icon="mdi:list-box-outline" className="h-8 w-8 shrink-0" />
-          </button>
-
-          <button
-            onClick={() => handleTabChange('map')}
-            className={`flex h-[46px] w-16 items-center justify-center rounded-[20px] transition-all ${
-              activeTab === 'map' ? 'bg-[rgba(255,255,255,0.1)] text-[#f2f2f2]' : 'text-[#8e8e8e]'
-            }`}
-            aria-label="Map"
-            disabled={isTransitioning}
-          >
-            <Icon icon="mdi-light:map-marker" className="h-8 w-8 shrink-0" />
           </button>
         </div>
       </div>
