@@ -137,13 +137,22 @@ function MapPage() {
     const map = new Map<string, { count: number; totalReach: number; entries: typeof entryPoints }>()
     for (const entry of entryPoints) {
       if (!entry) continue
-      const arr = map.get(entry.country)
+
+      let key = entry.countryName;
+
+      // shhhhh
+      if (key === "United States") {
+        key = "United States of America";
+      }
+
+      const arr = map.get(key)
+      
       if (arr) {
         arr.count++
         arr.totalReach += entry.estimatedReach
         arr.entries.push(entry)
       } else {
-        map.set(entry.country, { count: 1, totalReach: entry.estimatedReach, entries: [entry] })
+        map.set(key, { count: 1, totalReach: entry.estimatedReach, entries: [entry] })
       }
     }
     return map
@@ -386,79 +395,89 @@ function MapPage() {
 
       <section className="pointer-events-none relative z-10 h-full px-4 pb-4 pt-36 md:px-6 md:pb-6 md:pt-40 flex flex-col justify-between">
 
-        <aside ref={sidebarRef} className="pointer-events-auto w-[285px] max-h-[70%] overflow-y-auto m-3 rounded-[20px] bg-[rgba(255,255,255,0.08)] p-5 backdrop-blur-[30px] hidden md:flex md:flex-col">
-          <div className="flex-1 overflow-y-auto pr-1">
+        <aside ref={sidebarRef} className="pointer-events-auto w-[285px] max-h-full overflow-hidden m-3 rounded-[20px] bg-[rgba(255,255,255,0.08)] p-5 backdrop-blur-[30px] hidden md:flex md:flex-col">
+          <div className="flex flex-col h-full overflow-hidden">
             <h2 className="mb-3 text-base font-semibold text-white">Details</h2>
-            {!selectedEntryId && !selectedCountry && !hoveredCountry ? (
-              <p className="text-sm text-[#c4d0e8]">Click a point to view entry details or hover to see country summary.</p>
-            ) : selectedEntryId ? (
-              (() => {
-                const entry = entryPoints.find(e => e.id === selectedEntryId)
-                if (!entry) return <p className="text-sm text-[#c4d0e8]">Entry not found.</p>
-                return (
-                  <article className="rounded-lg bg-white/5 p-3 flex flex-col gap-1">
-                    <p className="text-sm font-bold text-white whitespace-pre-line">{entry.organizationName || 'Untitled Organization'}</p>
-                    {entry.organizationDescription && (
-                      <p className="text-xs text-[#e0e0e0] italic mb-1 whitespace-pre-line">{entry.organizationDescription}</p>
-                    )}
-                    <ul className="mt-1 mb-1 space-y-1 text-xs text-[#c4d0e8]">
-                      <li><span className="font-semibold text-[#f2b223]">{CONSTRAINT_LABELS[entry.primaryConstraint] || entry.primaryConstraint}</span></li>
-                      <li>{ROLE_LABELS[entry.roleType] || entry.roleType}</li>
-                      <li>{FOCUS_LABELS[entry.focusArea] || entry.focusArea}</li>
-                      {entry.estimatedReach > 0 && <li><span className="text-[#b8e986]">Reach: {formatNumber(entry.estimatedReach)}</span></li>}
-                    </ul>
-                    {entry.contact && (
-                      <div className="pt-1 mt-1 border-t border-white/10">
-                        <span className="text-xs text-[#d9e7ff] break-all">{entry.contact}</span>
+            
+            <div className="flex-1 overflow-hidden flex flex-col">
+              {!selectedEntryId && !selectedCountry && !hoveredCountry ? (
+                <p className="text-sm text-[#c4d0e8]">Click a point to view entry details or hover to see country summary.</p>
+              ) : selectedEntryId ? (
+                (() => {
+                  const entry = entryPoints.find(e => e.id === selectedEntryId)
+                  if (!entry) return <p className="text-sm text-[#c4d0e8]">Entry not found.</p>
+                  return (
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      <article className="rounded-lg bg-white/5 p-3 flex flex-col gap-1 overflow-y-auto">
+                        <p className="text-sm font-bold text-white whitespace-pre-line">{entry.organizationName || 'Untitled Organization'}</p>
+                        {entry.organizationDescription && (
+                          <p className="text-xs text-[#e0e0e0] italic mb-1 whitespace-pre-line">{entry.organizationDescription}</p>
+                        )}
+                        <ul className="mt-1 mb-1 space-y-1 text-xs text-[#c4d0e8]">
+                          <li><span className="font-semibold text-[#f2b223]">{CONSTRAINT_LABELS[entry.primaryConstraint] || entry.primaryConstraint}</span></li>
+                          <li>{ROLE_LABELS[entry.roleType] || entry.roleType}</li>
+                          <li>{FOCUS_LABELS[entry.focusArea] || entry.focusArea}</li>
+                          {entry.estimatedReach > 0 && <li><span className="text-[#b8e986]">Reach: {formatNumber(entry.estimatedReach)}</span></li>}
+                        </ul>
+                        {entry.contact && (
+                          <div className="pt-1 mt-1 border-t border-white/10">
+                            <span className="text-xs text-[#d9e7ff] break-all">{entry.contact}</span>
+                          </div>
+                        )}
+                      </article>
+                    </div>
+                  )
+                })()
+              ) : (
+                (() => {
+                  const country = selectedCountry || hoveredCountry
+                  const meta = countryMeta.get(country!)
+                  if (!meta) return <p className="text-sm text-[#c4d0e8]">No entries in this country.</p>
+                  return (
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      <div className="space-y-3 shrink-0">
+                        <div className="rounded-lg bg-white/5 p-3">
+                          <p className="text-xs text-[#c4d0e8]">Country {hoveredCountry && !selectedCountry && '(Hovered)'}</p>
+                          <p className="text-base font-semibold text-white">{country}</p>
+                        </div>
+                        <div className="rounded-lg bg-white/5 p-3">
+                          <p className="text-xs text-[#c4d0e8]">Entries</p>
+                          <p className="text-base font-semibold text-white">{formatNumber(meta.count)}</p>
+                        </div>
+                        <div className="rounded-lg bg-white/5 p-3">
+                          <p className="text-xs text-[#c4d0e8]">Estimated Reach</p>
+                          <p className="text-base font-semibold text-white">{formatNumber(meta.totalReach)}</p>
+                        </div>
                       </div>
-                    )}
-                  </article>
-                )
-              })()
-            ) : (
-              (() => {
-                const country = selectedCountry || hoveredCountry
-                const meta = countryMeta.get(country!)
-                if (!meta) return <p className="text-sm text-[#c4d0e8]">No entries in this country.</p>
-                return (
-                  <div className="space-y-3">
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-xs text-[#c4d0e8]">Country {hoveredCountry && !selectedCountry && '(Hovered)'}</p>
-                      <p className="text-base font-semibold text-white">{country}</p>
+                      
+                      <div className="my-4 border-t border-white/10 shrink-0" />
+                      
+                      <div className="space-y-3 overflow-y-auto flex-1 pr-1">
+                        {meta.entries.map((entry) => (
+                          entry && (
+                            <article key={entry.id} className="rounded-lg bg-white/10 p-2 flex flex-col gap-1">
+                              <span className="text-xs text-white font-semibold">{entry.organizationName || 'Untitled Organization'}</span>
+                              <span className="text-xs text-[#c4d0e8]">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
+                            </article>
+                          )
+                        ))}
+                      </div>
                     </div>
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-xs text-[#c4d0e8]">Entries</p>
-                      <p className="text-base font-semibold text-white">{formatNumber(meta.count)}</p>
-                    </div>
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-xs text-[#c4d0e8]">Estimated Reach</p>
-                      <p className="text-base font-semibold text-white">{formatNumber(meta.totalReach)}</p>
-                    </div>
-                    <div className="space-y-3">
-                      {meta.entries.map((entry) => (
-                        entry && (
-                          <article key={entry.id} className="rounded-lg bg-white/10 p-2 flex flex-col gap-1">
-                            <span className="text-xs text-white font-semibold">{entry.organizationName || 'Untitled Organization'}</span>
-                            <span className="text-xs text-[#c4d0e8]">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
-                          </article>
-                        )
-                      ))}
-                    </div>
-                  </div>
-                )
-              })()
-            )}
-          </div>
+                  )
+                })()
+              )}
+            </div>
 
-          <div className="mt-6 pt-4 border-t border-white/10 space-y-2">
-            <p className="text-[10px] font-bold text-[#b8c5df] uppercase tracking-wider">Legend (Focus Area)</p>
-            <div className="grid grid-cols-1 gap-1.5">
-              {Object.entries(FOCUS_LABELS).map(([id, label]) => (
-                <div key={id} className="flex items-center gap-2 text-[11px] text-[#c4d0e8]">
-                  <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: FOCUS_COLOR[id as keyof typeof FOCUS_COLOR] }} />
-                  <span>{label}</span>
-                </div>
-              ))}
+            <div className="mt-6 pt-4 border-t border-white/10 space-y-2 shrink-0">
+              <p className="text-[10px] font-bold text-[#b8c5df] uppercase tracking-wider">Legend (Focus Area)</p>
+              <div className="grid grid-cols-1 gap-1.5">
+                {Object.entries(FOCUS_LABELS).map(([id, label]) => (
+                  <div key={id} className="flex items-center gap-2 text-[11px] text-[#c4d0e8]">
+                    <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: FOCUS_COLOR[id as keyof typeof FOCUS_COLOR] }} />
+                    <span>{label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </aside>
@@ -507,6 +526,7 @@ function MapPage() {
             </div>
           </div>
           
+          {/* mobile bottom bar */}
           <aside
             className="pointer-events-auto w-[calc(100vw-24px)] max-w-[560px] rounded-t-[22px]  bg-[rgba(255,255,255,0.12)] p-4 backdrop-blur-[18px] md:hidden"
           >

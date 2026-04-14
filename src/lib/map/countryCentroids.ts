@@ -6,25 +6,13 @@ export function getAllCountries(): CountryType[] {
 }
 
 export function getCountryByCode(isoCodeOrName: string): CountryType | undefined {
-    const normalized = isoCodeOrName.toLowerCase().trim();
-    
-    // idk why but it cant find this
-    // buggy fix but manually mapping
-    const mapping: Record<string, string> = {
-        'united states of america': 'united states',
-        'usa': 'united states',
-        'u.s.a.': 'united states'
-    };
-    
-    const targetName = mapping[normalized] || normalized;
-
     // Try by code first
     const byCode = Country.getCountryByCode(isoCodeOrName);
     if (byCode) return byCode;
 
     // Try by name
     const all = getAllCountries();
-    return all.find(c => c.name.toLowerCase() === targetName);
+    return all.find(c => c.name.toLowerCase() === isoCodeOrName.toLowerCase());
 }
 
 export function getStatesOfCountry(countryNameOrCode: string): StateType[] {
