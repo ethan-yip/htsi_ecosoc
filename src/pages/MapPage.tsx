@@ -66,6 +66,7 @@ function MapPage() {
   const globeContainerRef = useRef<HTMLDivElement>(null)
   const logosRef = useRef<HTMLDivElement>(null)
   const desktopMetricsRef = useRef<HTMLDivElement>(null)
+  const mobileUIRef = useRef<HTMLDivElement>(null)
 
   // Each entry gets a lat/lng at the country/state centroid
   // Add a small random offset to each entry's lat/lng to avoid perfect overlap
@@ -170,7 +171,6 @@ function MapPage() {
   const [globeAltitude, setGlobeAltitude] = useState(2.0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
-  const aboutButtonRef = useRef<HTMLButtonElement>(null)
   const aboutPopupRef = useRef<HTMLDivElement>(null)
   const aboutOverlayRef = useRef<HTMLDivElement>(null)
 
@@ -276,6 +276,9 @@ function MapPage() {
 
   // Fullscreen animation logic
   useLayoutEffect(() => {
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) return;
+
     if (isFullscreen) {
       // Animate OUT
       gsap.to(sidebarRef.current, { x: -300, opacity: 0, scale: 0.8, duration: 0.6, ease: 'power2.inOut' })
@@ -449,24 +452,25 @@ function MapPage() {
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() => setIsFullscreen(!isFullscreen)}
-        className="absolute left-6 top-6 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
-        title={isFullscreen ? "Show UI" : "Fullscreen Mode"}
-      >
-        <Icon icon={isFullscreen ? "mdi:fullscreen-exit" : "mdi:fullscreen"} className="h-6 w-6" />
-      </button>
+      <div className='hidden sm:block'>
+        <button
+          type="button"
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          className="absolute left-6 top-6 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
+          title={isFullscreen ? "Show UI" : "Fullscreen Mode"}
+        >
+          <Icon icon={isFullscreen ? "mdi:fullscreen-exit" : "mdi:fullscreen"} className="h-6 w-6" />
+        </button>
 
-      <button
-        ref={aboutButtonRef}
-        type="button"
-        onClick={() => setShowAbout(true)}
-        className="absolute right-6 top-6 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
-        title="About ECOSOC"
-      >
-        <Icon icon="mdi:help-circle-outline" className="h-6 w-6" />
-      </button>
+        <button
+          type="button"
+          onClick={() => setShowAbout(true)}
+          className="absolute right-6 top-6 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
+          title="About ECOSOC"
+        >
+          <Icon icon="mdi:help-circle-outline" className="h-6 w-6" />
+        </button>
+      </div>
 
       {showAbout && (
         <div 
@@ -686,11 +690,32 @@ function MapPage() {
         {/* Mobile metrics + bottom sheet group (mobile only) */}
         <div
           className={`fixed left-0 right-0 z-30 flex flex-col items-center transition-transform duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] md:hidden`}
+          ref={mobileUIRef}
           style={{
             bottom: 0,
-            transform: (selectedEntryId || selectedCountry) ? 'translateY(0)' : 'translateY(calc(100% - 200px))',
+            transform: ((selectedEntryId || selectedCountry) && !isFullscreen) ? 'translateY(0)' : `translateY(calc(100% - ${(isFullscreen) ? 200 : 260}px))`,
           }}
         >
+          <div className="flex mb-3 justify-between w-full px-4 z-200 pointer-events-auto">
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="z-100 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
+              title={isFullscreen ? "Show UI" : "Fullscreen Mode"}
+            >
+              <Icon icon={isFullscreen ? "mdi:fullscreen-exit" : "mdi:fullscreen"} className="h-6 w-6" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowAbout(true)}
+              className="z-100 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
+              title="About ECOSOC"
+            >
+              <Icon icon="mdi:help-circle-outline" className="h-6 w-6" />
+            </button>
+          </div>
+
           {/* Mobile Legend - Always visible on mobile, above metrics if bottom bar closed */}
           <div className="mb-3 flex w-[calc(100vw-24px)] max-w-[560px] flex-wrap justify-center gap-x-3 gap-y-1.5 rounded-[15px] bg-[rgba(255,255,255,0.08)] p-3 backdrop-blur-[18px]">
             {Object.entries(FOCUS_LABELS).map(([id, label]) => (
