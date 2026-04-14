@@ -85,15 +85,15 @@ function InputPage() {
   }
 
   return (
-    <main className="relative h-dvh overflow-hidden bg-[#1b1b1b]">
-      <div ref={topBarRef} className="absolute inset-x-0 top-0 z-20 flex h-[8vh] w-full items-center justify-center bg-[rgba(255,255,255,0.1)] md:hidden">
+    <main className="relative h-dvh overflow-hidden bg-[#3a0000]">
+      <div ref={topBarRef} className="absolute inset-x-0 top-0 z-20 flex h-[8vh] w-full items-center justify-center bg-[rgba(255,255,255,0.05)] md:hidden">
         <Link
           to="/"
           className="absolute left-3 z-20 sm:hidden items-center gap-2 rounded-lg bg-white/10 p-2 text-sm font-medium text-[#e0e0e0] transition hover:bg-white/20 md:inline-flex"
         >
           <Icon icon="mdi:arrow-left" className="h-4 w-4" />
         </Link>
-        <h1 className="px-6 py-4 text-lg font-bold text-white">Map App Thingy</h1>
+        <h1 className="px-6 py-4 max-w-2/3 text-md font-bold text-white text-center">ECOSOC Youth Innovation Systems Map</h1>
       </div>
 
       <FormProvider>
@@ -102,7 +102,7 @@ function InputPage() {
         </div>
       </FormProvider>
 
-      <div ref={footerRef} className="absolute inset-x-0 bottom-0 h-[8vh] w-full bg-[rgba(255,255,255,0.1)] md:hidden">
+      <div ref={footerRef} className="absolute inset-x-0 bottom-0 h-[8vh] w-full bg-[rgba(255,255,255,0.05)] md:hidden">
         <div className="mx-auto flex h-full w-full max-w-[430px] items-center justify-around px-6">
            <button
             onClick={() => handleTabChange('map')}

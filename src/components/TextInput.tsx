@@ -24,7 +24,7 @@ export function TextInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-[10px] border border-transparent bg-[rgba(255,255,255,0.15)] px-4 py-3 text-sm font-normal text-white placeholder-[#8b8b8b] outline-none transition-all hover:border-[rgba(255,255,255,0.25)] focus:border-[#3d6ec9] focus:bg-[rgba(255,255,255,0.2)]"
+        className="w-full rounded-[10px] border border-transparent bg-[rgba(255,255,255,0.15)] px-4 py-3 text-sm font-normal text-white placeholder-[#cfcfcf] outline-none transition-all hover:border-[rgba(255,255,255,0.25)] focus:border-[#B14242] focus:bg-[rgba(255,255,255,0.2)]"
       />
     </div>
   )

@@ -44,7 +44,11 @@ export function OptionDropdown({ label, options, value, onChange, placeholder }:
       <div className="relative">
         <button
           onClick={() => setIsOpen((previous) => !previous)}
-          className="flex w-full items-center justify-between rounded-[10px] bg-[rgba(255,255,255,0.15)] px-4 py-3 text-sm font-medium text-white transition-all hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.2)]"
+          className={`flex w-full items-center justify-between rounded-[10px] border transition-all px-4 py-3 text-sm font-medium text-white ${
+            isOpen 
+              ? 'bg-[rgba(255,255,255,0.1)] border-[#B14242]' 
+              : 'bg-[rgba(255,255,255,0.15)] border-transparent hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.2)]'
+          }`}
         >
           <span className={selectedOption ? '' : 'text-[#8b8b8b]'}>
             {selectedOption ? selectedOption.label : (placeholder || 'Select an option')}
@@ -53,14 +57,14 @@ export function OptionDropdown({ label, options, value, onChange, placeholder }:
         </button>
 
         {isOpen && (
-          <ul className="absolute left-0 right-0 top-full z-50 mt-2 max-h-60 overflow-y-auto rounded-[10px] border border-[rgba(255,255,255,0.15)] bg-[#313131] shadow-lg animate-[countrySelectorFadeIn_180ms_ease-out]">
+          <ul className="absolute left-0 right-0 top-full z-50 mt-2 max-h-60 overflow-y-auto rounded-[10px] border border-[rgba(255,255,255,0.15)] bg-[#3a0000] shadow-lg animate-[countrySelectorFadeIn_180ms_ease-out]">
             {options.map((option) => (
               <li key={option.id}>
                 <button
                   onClick={() => handleSelect(option.id)}
                   className={`w-full px-4 py-3 text-left text-sm font-medium transition-all ${
                     value === option.id
-                      ? 'bg-[#3d6ec9] text-white'
+                      ? 'bg-[#B14242] text-white'
                       : 'text-[#e0e0e0] hover:bg-[rgba(255,255,255,0.1)]'
                   }`}
                 >

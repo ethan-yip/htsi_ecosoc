@@ -56,8 +56,8 @@ export function FormActions() {
         disabled={isSubmitting || !isValid}
         className={`flex h-[50px] w-full items-center justify-center gap-2 rounded-[20px] px-4 text-center text-lg font-medium transition-all sm:flex-1 ${
           isSubmitting || !isValid
-            ? 'bg-[#232323] text-[#b2b2b2] cursor-not-allowed'
-            : 'bg-[#3d6ec9] text-white hover:bg-[#2d5ca9]'
+            ? 'bg-[#362828] text-[#b2b2b2] cursor-not-allowed'
+            : 'bg-[#B14242] text-white hover:bg-[#d97d20]'
         }`}
       >
         <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>

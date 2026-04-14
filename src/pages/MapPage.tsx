@@ -166,6 +166,24 @@ function MapPage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null)
 
+  // Function to handle selection updates
+  const handleSelectCountry = (name: string | null) => {
+    setSelectedCountry(name)
+    setSelectedEntryId(null)
+    setExpandedCountry(null)
+  }
+
+  const handleSelectEntry = (id: string | null, countryName: string | null) => {
+    setSelectedEntryId(id)
+    setSelectedCountry(countryName)
+    setExpandedCountry(null)
+  }
+
+  const closeMobileBottomBar = () => {
+    setSelectedEntryId(null)
+    setSelectedCountry(null)
+  }
+
   const animateBackToHome = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
 
@@ -281,11 +299,10 @@ function MapPage() {
   }, [])
 
   return (
-    <main ref={pageRef} className="relative h-dvh overflow-hidden bg-[#0d1320] text-white">
+    <main ref={pageRef} className="relative h-dvh overflow-hidden bg-[#3a0000] text-white">
       <div className="absolute inset-0 z-0">
         <img src={MAP_BG_IMAGE} alt="" className="h-full w-full object-cover opacity-35" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(44,89,185,0.22),transparent_45%),radial-gradient(circle_at_80%_75%,rgba(15,194,158,0.17),transparent_40%),linear-gradient(180deg,rgba(8,13,24,0.82),rgba(8,13,24,0.92))]" />
-      </div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(128,0,32,0.28),transparent_45%),radial-gradient(circle_at_80%_75%,rgba(90,0,25,0.22),transparent_40%),linear-gradient(180deg,rgba(8,13,24,0.82),rgba(8,13,24,0.92))]" />      </div>
 
       <div ref={globeContainerRef} className="absolute inset-0 z-[5]">
         {isLoading ? (
@@ -316,8 +333,8 @@ function MapPage() {
               polygonCapColor={(d: object) => {
                 const properties = (d as { properties: Record<string, string> }).properties;
                 const name = properties.NAME || properties.ADMIN
-                if (selectedCountry === name) return 'rgba(61, 110, 201, 0.4)'
-                if (hoveredCountry === name) return 'rgba(61, 110, 201, 0.2)'
+                if (selectedCountry === name) return 'rgba(177, 66, 66, 0.4)'
+                if (hoveredCountry === name) return 'rgba(177, 66, 66, 0.2)'
                 return 'transparent'
               }}
               onPolygonHover={(d: object | null) => {
@@ -328,9 +345,7 @@ function MapPage() {
               onPolygonClick={(d: object) => {
                 const properties = (d as { properties: Record<string, string> }).properties;
                 const name = properties.NAME || properties.ADMIN
-                setSelectedCountry(name)
-                setSelectedEntryId(null)
-                setExpandedCountry(null)
+                handleSelectCountry(name)
               }}
               polygonLabel={(d: object) => {
                 const properties = (d as { properties: Record<string, string> }).properties;
@@ -349,9 +364,7 @@ function MapPage() {
               }}
               onPointClick={(point) => {
                 const entry = point as typeof entryPoints[number]
-                setSelectedEntryId(entry.id)
-                setSelectedCountry(entry.countryName)
-                setExpandedCountry(null)
+                handleSelectEntry(entry.id, entry.countryName)
               }}
             />
           </div>
@@ -360,15 +373,7 @@ function MapPage() {
 
       <div ref={headerRef} className="absolute left-1/2 top-5 z-20 w-[min(488px,calc(100%-1.5rem))] -translate-x-1/2 rounded-[25px] bg-[rgba(255,255,255,0.08)] p-[12px] backdrop-blur-[18px] md:top-8 md:w-[min(488px,calc(100%-2rem))] md:p-[15px]">
         <div className="relative mb-[5px] flex min-h-10 items-center justify-center md:min-h-0">
-          <Link
-            to="/input"
-            onClick={animateBackToHome}
-            className="absolute left-0 inline-flex items-center gap-1 rounded-lg bg-white/10 px-2.5 py-1.5 text-xs font-medium text-[#e0e0e0] backdrop-blur-[12px] transition hover:bg-white/20 md:hidden"
-          >
-            <Icon icon="mdi:arrow-left" className="h-3.5 w-3.5" />
-            Back
-          </Link>
-          <h1 className="rounded-[10px] px-5 py-2 text-lg font-bold text-white md:text-[20px]">Map App Thingy</h1>
+          <h1 className="text-center rounded-[10px] px-5 py-2 text-lg font-bold text-white md:text-[20px]">ECOSOC Youth Innovation Systems Map</h1>
         </div>
 
         <div className="grid grid-cols-2 rounded-[35px] bg-[rgba(255,255,255,0.1)] p-[2px]">
@@ -408,7 +413,7 @@ function MapPage() {
                           <p className="text-xs text-[#e0e0e0] italic mb-1 whitespace-pre-line">{entry.organizationDescription}</p>
                         )}
                         <ul className="mt-1 mb-1 space-y-1 text-xs text-[#c4d0e8]">
-                          <li><span className="font-semibold text-[#f2b223]">{CONSTRAINT_LABELS[entry.primaryConstraint] || entry.primaryConstraint}</span></li>
+                          <li><span className="font-semibold text-[#B14242]">{CONSTRAINT_LABELS[entry.primaryConstraint] || entry.primaryConstraint}</span></li>
                           <li>{ROLE_LABELS[entry.roleType] || entry.roleType}</li>
                           <li>{FOCUS_LABELS[entry.focusArea] || entry.focusArea}</li>
                           {entry.estimatedReach > 0 && <li><span className="text-[#b8e986]">Reach: {formatNumber(entry.estimatedReach)}</span></li>}
@@ -482,7 +487,7 @@ function MapPage() {
                           <div className="absolute inset-x-0 bottom-0 flex justify-center pb-2 pt-12 pointer-events-none">
                             <button
                               onClick={() => setExpandedCountry(country)}
-                              className="pointer-events-auto px-5 py-2 rounded-full bg-[#3d6ec9] hover:bg-[#4a7ed9] text-white text-[11px] font-bold shadow-xl transition-all hover:scale-105 active:scale-95"
+                              className="pointer-events-auto px-5 py-2 rounded-full bg-[#800000] hover:bg-[#a00000] text-white text-[11px] font-bold shadow-xl transition-all hover:scale-105 active:scale-95"
                             >
                               See More
                             </button>
@@ -529,12 +534,22 @@ function MapPage() {
 
         {/* Mobile metrics + bottom sheet group (mobile only) */}
         <div
-          className={`fixed left-0 right-0 z-30 flex flex-col items-center transition-transform duration-300 md:hidden`}
+          className={`fixed left-0 right-0 z-30 flex flex-col items-center transition-transform duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] md:hidden`}
           style={{
             bottom: 0,
-            transform: (selectedEntryId || selectedCountry) ? 'translateY(0)' : 'translateY(calc(100% - 115px))',
+            transform: (selectedEntryId || selectedCountry) ? 'translateY(0)' : 'translateY(calc(100% - 200px))',
           }}
         >
+          {/* Mobile Legend - Always visible on mobile, above metrics if bottom bar closed */}
+          <div className="mb-3 flex w-[calc(100vw-24px)] max-w-[560px] flex-wrap justify-center gap-x-3 gap-y-1.5 rounded-[15px] bg-[rgba(255,255,255,0.08)] p-3 backdrop-blur-[18px]">
+            {Object.entries(FOCUS_LABELS).map(([id, label]) => (
+              <div key={id} className="flex items-center gap-1.5 text-[10px] text-[#c4d0e8]">
+                <div className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: FOCUS_COLOR[id as keyof typeof FOCUS_COLOR] }} />
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+
           <div
             ref={metricsRef}
             className="pointer-events-none mb-2 flex w-[calc(100vw-24px)] max-w-[560px] flex-row items-end justify-center gap-2"
@@ -555,7 +570,7 @@ function MapPage() {
           
           {/* mobile bottom bar */}
           <aside
-            className="pointer-events-auto w-[calc(100vw-24px)] max-w-[560px] rounded-t-[22px]  bg-[rgba(255,255,255,0.12)] p-4 backdrop-blur-[18px] md:hidden"
+            className="pointer-events-auto w-[calc(100vw-24px)] max-w-[560px] min-h-[140px] rounded-t-[22px] bg-[rgba(255,255,255,0.12)] p-4 backdrop-blur-[18px] md:hidden"
           >
             <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-white/35" />
 
@@ -569,15 +584,12 @@ function MapPage() {
                 if (!entry) return <p className="text-sm text-[#c4d0e8]">Entry not found.</p>
                 return (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-white">{entry.organizationName || 'Untitled Organization'}</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-white truncate">{entry.organizationName || 'Untitled Organization'}</p>
                       <button
                         type="button"
-                        onClick={() => {
-                          setSelectedEntryId(null)
-                          setSelectedCountry(null)
-                        }}
-                        className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-xs font-medium text-[#d9e7ff]"
+                        onClick={closeMobileBottomBar}
+                        className="shrink-0 inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-xs font-medium text-[#d9e7ff]"
                       >
                         <Icon icon="mdi:close" className="h-3.5 w-3.5" />
                         Close
@@ -588,7 +600,7 @@ function MapPage() {
                         <p className="text-xs text-[#e0e0e0] italic mb-1 whitespace-pre-line">{entry.organizationDescription}</p>
                       )}
                       <ul className="mt-1 mb-1 space-y-1 text-xs text-[#c4d0e8]">
-                        <li><span className="font-semibold text-[#f2b223]">{CONSTRAINT_LABELS[entry.primaryConstraint] || entry.primaryConstraint}</span></li>
+                        <li><span className="font-semibold text-[#B14242]">{CONSTRAINT_LABELS[entry.primaryConstraint] || entry.primaryConstraint}</span></li>
                         <li>{ROLE_LABELS[entry.roleType] || entry.roleType}</li>
                         <li>{FOCUS_LABELS[entry.focusArea] || entry.focusArea}</li>
                         {entry.estimatedReach > 0 && <li><span className="text-[#b8e986]">Reach: {formatNumber(entry.estimatedReach)}</span></li>}
@@ -602,43 +614,65 @@ function MapPage() {
                   </div>
                 )
               })()
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-white">{selectedCountry}</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedEntryId(null)
-                      setSelectedCountry(null)
-                    }}
-                    className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-xs font-medium text-[#d9e7ff]"
-                  >
-                    <Icon icon="mdi:close" className="h-3.5 w-3.5" />
-                    Close
-                  </button>
-                </div>
+            ) : selectedCountry && (
+              (() => {
+                const meta = countryMeta.get(selectedCountry!)
+                if (!meta || meta.entries.length === 0) {
+                  return (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-white">{selectedCountry}</p>
+                        <button
+                          type="button"
+                          onClick={closeMobileBottomBar}
+                          className="shrink-0 inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-xs font-medium text-[#d9e7ff]"
+                        >
+                          <Icon icon="mdi:close" className="h-3.5 w-3.5" />
+                          Close
+                        </button>
+                      </div>
+                      <div className="rounded-lg bg-white/5 p-4 text-center">
+                        <p className="text-sm text-[#c4d0e8]">No entries found</p>
+                      </div>
+                    </div>
+                  )
+                }
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-white">{selectedCountry}</p>
+                      <button
+                        type="button"
+                        onClick={closeMobileBottomBar}
+                        className="shrink-0 inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-xs font-medium text-[#d9e7ff]"
+                      >
+                        <Icon icon="mdi:close" className="h-3.5 w-3.5" />
+                        Close
+                      </button>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg  bg-white/5 p-2.5">
-                    <p className="text-[11px] text-[#c4d0e8]">Entries</p>
-                    <p className="text-sm font-semibold text-white">{compactNumber(countryMeta.get(selectedCountry!)?.count || 0)}</p>
-                  </div>
-                  <div className="rounded-lg  bg-white/5 p-2.5">
-                    <p className="text-[11px] text-[#c4d0e8]">Est. Reach</p>
-                    <p className="text-sm font-semibold text-white">{compactNumber(countryMeta.get(selectedCountry!)?.totalReach || 0)}</p>
-                  </div>
-                </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-lg  bg-white/5 p-2.5">
+                        <p className="text-[11px] text-[#c4d0e8]">Entries</p>
+                        <p className="text-sm font-semibold text-white">{compactNumber(meta.count)}</p>
+                      </div>
+                      <div className="rounded-lg  bg-white/5 p-2.5">
+                        <p className="text-[11px] text-[#c4d0e8]">Est. Reach</p>
+                        <p className="text-sm font-semibold text-white">{compactNumber(meta.totalReach)}</p>
+                      </div>
+                    </div>
 
-                <div className="max-h-[30dvh] space-y-2 overflow-y-auto pr-1">
-                  {(countryMeta.get(selectedCountry!)?.entries || []).map((entry) => (
-                    <article key={entry.id} className="rounded-lg bg-white/10 p-2 flex flex-col gap-1">
-                      <span className="text-xs text-white font-semibold">{entry.organizationName || 'Untitled Organization'}</span>
-                      <span className="text-xs text-[#c4d0e8]">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
-                    </article>
-                  ))}
-                </div>
-              </div>
+                    <div className="max-h-[30dvh] space-y-2 overflow-y-auto pr-1">
+                      {meta.entries.map((entry) => (
+                        <article key={entry.id} className="rounded-lg bg-white/10 p-2 flex flex-col gap-1">
+                          <span className="text-xs text-white font-semibold">{entry.organizationName || 'Untitled Organization'}</span>
+                          <span className="text-xs text-[#c4d0e8]">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()
             )}
           </aside>
         </div>

@@ -84,7 +84,7 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
           Back
         </Link>
         <div className="home-form-anim mb-[clamp(12px,2vh,24px)] hidden w-full justify-center text-center md:flex">
-          <h1 className="text-xl font-bold text-white px-[20px] py-[15px] bg-white/10 w-fit rounded-xl">Map App Thingy</h1>
+          <h1 className="text-xl font-bold text-white px-[20px] py-[15px] bg-white/10 w-fit rounded-xl">ECOSOC Youth Innovation Systems Map</h1>
         </div>
       </div>
 
@@ -116,7 +116,7 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
 
       {/* Form Content */}
       {activeTab === 'input' && (
-        <div className="home-form-anim relative min-h-0 flex-1 rounded-[20px] bg-[#313131] px-4 py-5 md:px-[24px] md:py-[clamp(18px,3vh,30px)]">
+        <div className="home-form-anim relative min-h-0 flex-1 rounded-[20px] bg-[#531C1C] px-4 py-5 md:px-[24px] md:py-[clamp(18px,3vh,30px)]">
           <div
             ref={scrollContainerRef}
             className="h-full overflow-y-auto [scrollbar-gutter:stable]"
@@ -192,7 +192,7 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
                   onChange={e => updateFormState({ description: e.target.value })}
                   placeholder="Describe your organization or initiative (optional)"
                   rows={4}
-                  className="w-full rounded-[10px] border border-transparent bg-[rgba(255,255,255,0.15)] px-4 py-3 text-sm font-normal text-white placeholder-[#8b8b8b] outline-none transition-all hover:border-[rgba(255,255,255,0.25)] focus:border-[#3d6ec9] focus:bg-[rgba(255,255,255,0.2)] resize-vertical min-h-[70px]"
+                  className="w-full rounded-[10px] border border-transparent bg-[rgba(255,255,255,0.15)] px-4 py-3 text-sm font-normal text-white placeholder-[#8b8b8b] outline-none transition-all hover:border-[rgba(255,255,255,0.25)] focus:border-[#B14242] focus:bg-[rgba(255,255,255,0.2)] resize-vertical min-h-[70px]"
                 />
               </div>
 
@@ -226,7 +226,7 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
           </div>
 
           <div
-            className={`pointer-events-none absolute inset-x-2 bottom-3 flex min-h-14 items-end justify-center rounded-xl bg-[linear-gradient(to_top,rgba(49,49,49,0.86),rgba(49,49,49,0.18),rgba(49,49,49,0))] px-2 pb-1 backdrop-blur-[1.5px] transition-opacity duration-200 ${showScrollHint ? 'opacity-100' : 'opacity-0'}`}
+            className={`pointer-events-none absolute inset-x-2 bottom-3 flex min-h-14 items-end justify-center rounded-xl bg-[linear-gradient(to_top,rgba(58,0,0,0.86),rgba(58,0,0,0.18),rgba(58,0,0,0))] px-2 pb-1 backdrop-blur-[1.5px] transition-opacity duration-200 ${showScrollHint ? 'opacity-100' : 'opacity-0'}`}
           >
             <div className="flex items-center justify-center gap-1 text-[11px] font-medium tracking-[0.04em] text-[#b1b1b1]">
               <span>Scroll for more</span>

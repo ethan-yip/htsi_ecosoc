@@ -52,8 +52,8 @@ export function ButtonGroup({
                   : 'flex-1'
             } rounded-[15px] px-4 py-2.5 text-center text-sm font-medium transition-all ${
               selected === option.id
-                ? 'bg-[#3d6ec9] text-[#e6e6e6]'
-                : 'bg-[rgba(255,255,255,0.15)] text-[#b2b2b2] hover:bg-[rgba(255,255,255,0.2)]'
+                ? 'bg-[#B14242] text-white shadow-lg'
+                : 'bg-[rgba(255,255,255,0.1)] text-[#cfcfcf] hover:bg-[rgba(255,255,255,0.15)]'
             }`}
           >
             {option.label}

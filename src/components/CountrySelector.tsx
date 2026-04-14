@@ -49,7 +49,11 @@ export function CountrySelector({ value, onChange }: CountrySelectorProps) {
       <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex min-h-[52px] w-full items-center justify-between rounded-[10px] bg-[rgba(255,255,255,0.15)] px-4 py-3 text-white transition-all hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.2)]"
+          className={`flex min-h-[52px] w-full items-center justify-between rounded-[10px] border transition-all px-4 py-3 text-white ${
+            isOpen 
+              ? 'bg-[rgba(255,255,255,0.1)] border-[#B14242]' 
+              : 'bg-[rgba(255,255,255,0.15)] border-transparent hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.2)]'
+          }`}
         >
           <div className="flex items-center gap-3">
             {selectedCountry ? (
@@ -66,14 +70,14 @@ export function CountrySelector({ value, onChange }: CountrySelectorProps) {
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-[10px] border border-[rgba(255,255,255,0.15)] bg-[#313131] shadow-lg animate-[countrySelectorFadeIn_180ms_ease-out]">
+          <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-[10px] border border-[rgba(255,255,255,0.15)] bg-[#3a0000] shadow-lg animate-[countrySelectorFadeIn_180ms_ease-out]">
             {/* Search Input */}
             <input
               type="text"
               placeholder="Search countries..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-t-[10px] border-b border-[rgba(255,255,255,0.1)] bg-[#313131] px-4 py-3 text-sm font-normal text-white placeholder-[#8b8b8b] outline-none focus:bg-[rgba(255,255,255,0.05)]"
+              className="w-full rounded-t-[10px] border-b border-[rgba(255,255,255,0.1)] bg-[#3a0000] px-4 py-3 text-sm font-normal text-white placeholder-[#8b8b8b] outline-none focus:bg-[rgba(255,255,255,0.05)]"
               autoFocus
             />
 
@@ -86,7 +90,7 @@ export function CountrySelector({ value, onChange }: CountrySelectorProps) {
                       onClick={() => handleSelect(country.name)}
                       className={`w-full px-4 py-3 text-left text-sm font-medium transition-all ${
                         value === country.name || value === country.isoCode
-                          ? 'bg-[#3d6ec9] text-white'
+                          ? 'bg-[#B14242] text-white'
                           : 'text-[#e0e0e0] hover:bg-[rgba(255,255,255,0.1)]'
                       }`}
                     >
