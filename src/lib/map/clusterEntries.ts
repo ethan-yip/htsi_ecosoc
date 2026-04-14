@@ -1,6 +1,6 @@
 import type { PrimaryConstraint } from '../form/formState'
 import type { EntryDomainModel } from '../supabase/types'
-import { getCountryCentroid } from './countryCentroids'
+import { getCountryByCode, getStateByCode } from './countryCentroids'
 
 export const CONSTRAINT_COLOR: Record<PrimaryConstraint, string> = {
    '': '#bdbdbd', // or any neutral/placeholder color
@@ -14,6 +14,7 @@ export const CONSTRAINT_COLOR: Record<PrimaryConstraint, string> = {
 
 export interface CountryCluster {
   country: string
+  state?: string
   lat: number
   lng: number
   count: number
@@ -53,29 +54,44 @@ export function buildCountryClusters(entries: EntryDomainModel[]): CountryCluste
   const grouped = new Map<string, EntryDomainModel[]>()
 
   for (const entry of entries) {
-    const existing = grouped.get(entry.country)
+    const key = `${entry.country}-${entry.state || 'none'}`
+    const existing = grouped.get(key)
     if (existing) {
       existing.push(entry)
     } else {
-      grouped.set(entry.country, [entry])
+      grouped.set(key, [entry])
     }
   }
 
   const clusters: CountryCluster[] = []
 
-  for (const [country, groupedEntries] of grouped.entries()) {
-    const centroid = getCountryCentroid(country)
-    if (!centroid) {
-      continue
-    }
+    for (const groupedEntries of grouped.values()) {
+      const first = groupedEntries[0]
+      const countryCode = first.country
+      const stateCode = first.state
+  
+      const country = getCountryByCode(countryCode)
+      if (!country) continue
+  
+      let lat = Number.parseFloat(country.latitude)
+      let lng = Number.parseFloat(country.longitude)
+  
+      if (stateCode) {
+        const state = getStateByCode(country.isoCode, stateCode)
+        if (state && state.latitude && state.longitude) {
+          lat = Number.parseFloat(state.latitude)
+          lng = Number.parseFloat(state.longitude)
+        }
+      }
 
     const dominantConstraint = getDominantConstraint(groupedEntries)
     const totalReach = groupedEntries.reduce((sum, item) => sum + item.estimatedReach, 0)
 
     clusters.push({
-      country,
-      lat: centroid.lat,
-      lng: centroid.lng,
+      country: country.name,
+      state: stateCode || undefined,
+      lat,
+      lng,
       count: groupedEntries.length,
       totalReach,
       entries: groupedEntries,

@@ -1,64 +1,32 @@
-import countries from 'world-countries'
+import { Country, State } from 'country-state-city';
+import type { Country as CountryType, State as StateType } from './geoTypes';
 
-interface WorldCountryRecord {
-  name: {
-    common: string
-    official: string
-  }
-  altSpellings?: string[]
-  cca2?: string
-  cca3?: string
-  latlng?: number[]
+export function getAllCountries(): CountryType[] {
+    return Country.getAllCountries();
 }
 
-export interface CountryCentroid {
-  lat: number
-  lng: number
+export function getCountryByCode(isoCodeOrName: string): CountryType | undefined {
+    // Try by code first
+    const byCode = Country.getCountryByCode(isoCodeOrName);
+    if (byCode) return byCode;
+
+    // Try by name
+    const all = getAllCountries();
+    return all.find(c => c.name.toLowerCase() === isoCodeOrName.toLowerCase());
 }
 
-const centroidLookup = new Map<string, CountryCentroid>()
-
-const aliasMap: Record<string, string> = {
-  'usa': 'United States',
-  'u.s.a.': 'United States',
-  'united states of america': 'United States',
-  'uk': 'United Kingdom',
-  'u.k.': 'United Kingdom',
-  'uae': 'United Arab Emirates',
+export function getStatesOfCountry(countryNameOrCode: string): StateType[] {
+    const country = getCountryByCode(countryNameOrCode);
+    if (!country) return [];
+    return State.getStatesOfCountry(country.isoCode);
 }
 
-function normalizeName(value: string): string {
-  return value.trim().toLowerCase()
-}
+export function getStateByCode(countryCode: string, stateCodeOrName: string): StateType | undefined {
+    const states = getStatesOfCountry(countryCode);
+    // Try by code
+    const byCode = states.find(state => state.isoCode === stateCodeOrName);
+    if (byCode) return byCode;
 
-for (const country of countries as WorldCountryRecord[]) {
-  if (!country.latlng || country.latlng.length < 2) {
-    continue
-  }
-
-  const centroid = {
-    lat: country.latlng[0],
-    lng: country.latlng[1],
-  }
-
-  const keys = [
-    country.name.common,
-    country.name.official,
-    country.cca2 ?? '',
-    country.cca3 ?? '',
-    ...(country.altSpellings ?? []),
-  ]
-
-  for (const key of keys) {
-    const normalized = normalizeName(key)
-    if (normalized) {
-      centroidLookup.set(normalized, centroid)
-    }
-  }
-}
-
-export function getCountryCentroid(countryName: string): CountryCentroid | null {
-  const normalized = normalizeName(countryName)
-  const resolvedName = aliasMap[normalized] ? normalizeName(aliasMap[normalized]) : normalized
-  return centroidLookup.get(resolvedName) ?? null
+    // Try by name
+    return states.find(state => state.name.toLowerCase() === stateCodeOrName.toLowerCase());
 }

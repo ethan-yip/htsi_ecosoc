@@ -1,7 +1,7 @@
-import usStates from '../data/us_states.json'
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '@iconify/react'
 import { useFormContext } from '../lib/form/useFormContext'
+import { getStatesOfCountry } from '../lib/map/countryCentroids'
 import type { FocusArea, PrimaryConstraint, RoleType } from '../lib/form/formState'
 import { CountrySelector } from './CountrySelector'
 import { ButtonGroup } from './ButtonGroup'
@@ -123,15 +123,22 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
                     updateFormState({ country: value, state: '' })
                   }}
                 />
-                {formState.country === 'United States' && (
-                  <div className="mt-3">
-                    <OptionDropdown
-                      label={<span>State <span className="text-[#e57373]">*</span></span>}
-                      options={usStates}
-                      value={formState.state}
-                      onChange={id => updateFormState({ state: id })}
-                    />
-                  </div>
+                {formState.country && (
+                  (() => {
+                    const states = getStatesOfCountry(formState.country);
+                    if (states.length === 0) return null;
+                    return (
+                      <div className="mt-3">
+                        <OptionDropdown
+                          label={<span>State / Region <span className="text-[#e57373]">*</span></span>}
+                          options={states.map(s => ({ id: s.name, label: s.name }))}
+                          value={formState.state}
+                          onChange={id => updateFormState({ state: id })}
+                          placeholder="Select a state / region"
+                        />
+                      </div>
+                    );
+                  })()
                 )}
               </div>
 
@@ -184,6 +191,7 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
                 options={CONSTRAINT_OPTIONS}
                 value={formState.primaryConstraint}
                 onChange={(id) => updateFormState({ primaryConstraint: id as PrimaryConstraint })}
+                placeholder="Select a constraint"
               />
 
               {/* Estimated Youth Reach */}

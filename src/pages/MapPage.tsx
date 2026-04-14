@@ -33,7 +33,7 @@ import Globe from 'react-globe.gl'
 import type { GlobeMethods } from 'react-globe.gl'
 import gsap from 'gsap'
 import { getEntryMetrics } from '../lib/map/clusterEntries'
-import { getCountryCentroid } from '../lib/map/countryCentroids'
+import { getCountryByCode, getStateByCode } from '../lib/map/countryCentroids'
 import { useEntries } from '../lib/supabase/useEntries'
 import type { CountryCluster } from '../lib/map/clusterEntries'
 
@@ -57,40 +57,68 @@ function MapPage() {
   const metricsRef = useRef<HTMLDivElement>(null)
   const globeContainerRef = useRef<HTMLDivElement>(null)
 
-  // Each entry gets a lat/lng at the country centroid
+  // Each entry gets a lat/lng at the country/state centroid
   // Add a small random offset to each entry's lat/lng to avoid perfect overlap
   // Type for entries with lat/lng
-  type EntryWithCoords = typeof entries[number] & { lat: number; lng: number };
+  type EntryWithCoords = typeof entries[number] & { lat: number; lng: number; countryName: string; stateName?: string };
   const entryPoints = useMemo<EntryWithCoords[]>(() => {
-    // Group entries by country for spiral spreading
+    // Group entries by country + state for spiral spreading
     const grouped: Record<string, EntryWithCoords[]> = {};
     for (const entry of entries) {
-      if (!grouped[entry.country]) grouped[entry.country] = [];
-      // We'll add lat/lng later
-      grouped[entry.country].push(entry as EntryWithCoords);
+      const key = `${entry.country}-${entry.state || 'none'}`;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(entry as EntryWithCoords);
     }
     const points: EntryWithCoords[] = [];
-    // The visual size of a point in degrees (approximate, since pointRadius is in globe units)
-    const pointVisualRadius = 0.45 * 2.5; // pointRadius * fudge factor for globe scale
-    for (const country in grouped) {
-      const cluster = grouped[country];
-      const centroid = getCountryCentroid(country);
-      if (!centroid) continue;
+    const pointVisualRadius = 0.45 * 2.5;
+
+    for (const key in grouped) {
+      const cluster = grouped[key];
+      const first = cluster[0];
+      const countryCode = first.country;
+      const stateCode = first.state;
+
+      const country = getCountryByCode(countryCode);
+      if (!country) {
+        // console.warn(`Country not found: ${countryCode}`);
+        continue;
+      }
+
+      let lat = Number.parseFloat(country.latitude);
+      let lng = Number.parseFloat(country.longitude);
+      let stateName: string | undefined;
+
+      if (stateCode) {
+        const state = getStateByCode(country.isoCode, stateCode);
+        if (state && state.latitude && state.longitude) {
+          lat = Number.parseFloat(state.latitude);
+          lng = Number.parseFloat(state.longitude);
+          stateName = state.name;
+        } else if (state) {
+          // console.warn(`State found but no coords for: ${state.name}`);
+        } else {
+          // console.warn(`State not found: ${stateCode} in ${country.name}`);
+        }
+      }
+
       const n = cluster.length;
-      // Spiral: golden angle
       const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-      // Minimum spiral radius to avoid overlap: scale with point size and cluster size
-      const minSpiralRadius = Math.max(pointVisualRadius * 1.1, 0.18); // ensure at least 1.1x point size
-      const maxSpiralRadius = 0.45 + Math.log2(n + 1) * 0.18; // scale with cluster size
+      const minSpiralRadius = Math.max(pointVisualRadius * 1.1, 0.18);
+      const maxSpiralRadius = 0.45 + Math.log2(n + 1) * 0.18;
+
       for (let i = 0; i < n; i++) {
         const entry = cluster[i];
-        // Spread out in a spiral, radius increases with sqrt(i)
         const angle = i * goldenAngle;
-        // Use sqrt for even distribution, interpolate between min and max spiral radius
         const radius = minSpiralRadius + (maxSpiralRadius - minSpiralRadius) * Math.sqrt(i / Math.max(1, n - 1));
         const dLat = Math.cos(angle) * radius;
         const dLng = Math.sin(angle) * radius;
-        points.push({ ...entry, lat: centroid.lat + dLat, lng: centroid.lng + dLng });
+        points.push({ 
+          ...entry, 
+          lat: lat + dLat, 
+          lng: lng + dLng, 
+          countryName: country.name,
+          stateName
+        });
       }
     }
     return points;
@@ -264,7 +292,7 @@ function MapPage() {
               pointAltitude={0.04}
               pointLabel={(point) => {
                 const entry = point as typeof entryPoints[number]
-                return `${entry.organizationName || 'Untitled Organization'}\n${entry.country}`
+                return `${entry.organizationName || 'Untitled Organization'}\n${entry.stateName ? `${entry.stateName}, ` : ''}${entry.countryName}`
               }}
               onPointClick={(point) => {
                 const entry = point as typeof entryPoints[number]

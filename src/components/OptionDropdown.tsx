@@ -13,9 +13,10 @@ interface OptionDropdownProps {
   options: OptionItem[]
   value: string
   onChange: (id: string) => void
+  placeholder?: string
 }
 
-export function OptionDropdown({ label, options, value, onChange }: OptionDropdownProps) {
+export function OptionDropdown({ label, options, value, onChange, placeholder }: OptionDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -46,7 +47,7 @@ export function OptionDropdown({ label, options, value, onChange }: OptionDropdo
           className="flex w-full items-center justify-between rounded-[10px] bg-[rgba(255,255,255,0.15)] px-4 py-3 text-sm font-medium text-white transition-all hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.2)]"
         >
           <span className={selectedOption ? '' : 'text-[#8b8b8b]'}>
-            {selectedOption ? selectedOption.label : 'Select a constraint'}
+            {selectedOption ? selectedOption.label : (placeholder || 'Select an option')}
           </span>
           <Icon icon="mdi:chevron-down" className={`h-6 w-6 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>

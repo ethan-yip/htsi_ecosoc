@@ -1,29 +1,31 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Icon } from '@iconify/react'
-import countries from '../data/countries.json'
+import { getAllCountries } from '../lib/map/countryCentroids'
 
 interface CountrySelectorProps {
   value: string
   onChange: (value: string) => void
 }
 
-interface CountryOption {
-  label: string
-  icon: string
-}
-
-const COUNTRY_OPTIONS = countries as CountryOption[]
-
 export function CountrySelector({ value, onChange }: CountrySelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const filteredCountries = COUNTRY_OPTIONS.filter((country) =>
-    country.label.toLowerCase().includes(searchTerm.toLowerCase())
+  const countries = useMemo(() => getAllCountries(), [])
+
+  const filteredCountries = useMemo(() => 
+    countries.filter((country) =>
+      country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      country.isoCode.toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+    [countries, searchTerm]
   )
 
-  const selectedCountry = COUNTRY_OPTIONS.find((country) => country.label === value)
+  const selectedCountry = useMemo(() => 
+    countries.find((country) => country.name === value || country.isoCode === value),
+    [countries, value]
+  )
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -36,8 +38,8 @@ export function CountrySelector({ value, onChange }: CountrySelectorProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleSelect = (country: string) => {
-    onChange(country)
+  const handleSelect = (countryName: string) => {
+    onChange(countryName)
     setIsOpen(false)
     setSearchTerm('')
   }
@@ -47,16 +49,16 @@ export function CountrySelector({ value, onChange }: CountrySelectorProps) {
       <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex w-full items-center justify-between rounded-[10px] bg-[rgba(255,255,255,0.15)] px-4 py-3 text-white transition-all hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.2)]"
+          className="flex min-h-[52px] w-full items-center justify-between rounded-[10px] bg-[rgba(255,255,255,0.15)] px-4 py-3 text-white transition-all hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.2)]"
         >
           <div className="flex items-center gap-3">
             {selectedCountry ? (
-              <Icon icon={selectedCountry.icon} className="h-6 w-6 shrink-0" />
+              <span className="text-xl">{selectedCountry.flag}</span>
             ) : (
               <Icon icon="mdi:earth" className="h-6 w-6 shrink-0 text-[#8b8b8b]" />
             )}
             <span className={`text-sm font-medium ${!value ? 'text-[#8b8b8b]' : ''}`}>
-              {value || 'Select a country'}
+              {selectedCountry ? selectedCountry.name : 'Select a country'}
             </span>
           </div>
           <Icon icon="mdi:chevron-down" className={`h-6 w-6 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -79,18 +81,18 @@ export function CountrySelector({ value, onChange }: CountrySelectorProps) {
             <ul className="max-h-60 overflow-y-auto">
               {filteredCountries.length > 0 ? (
                 filteredCountries.map((country) => (
-                  <li key={country.label}>
+                  <li key={country.isoCode}>
                     <button
-                      onClick={() => handleSelect(country.label)}
+                      onClick={() => handleSelect(country.name)}
                       className={`w-full px-4 py-3 text-left text-sm font-medium transition-all ${
-                        value === country.label
+                        value === country.name || value === country.isoCode
                           ? 'bg-[#3d6ec9] text-white'
                           : 'text-[#e0e0e0] hover:bg-[rgba(255,255,255,0.1)]'
                       }`}
                     >
                       <span className="flex items-center gap-3">
-                        <Icon icon={country.icon} className="h-5 w-5 shrink-0" />
-                        <span>{country.label}</span>
+                        <span className="text-xl">{country.flag}</span>
+                        <span>{country.name}</span>
                       </span>
                     </button>
                   </li>
