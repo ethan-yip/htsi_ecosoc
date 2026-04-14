@@ -64,6 +64,8 @@ function MapPage() {
   const sidebarRef = useRef<HTMLElement>(null)
   const metricsRef = useRef<HTMLDivElement>(null)
   const globeContainerRef = useRef<HTMLDivElement>(null)
+  const logosRef = useRef<HTMLDivElement>(null)
+  const desktopMetricsRef = useRef<HTMLDivElement>(null)
 
   // Each entry gets a lat/lng at the country/state centroid
   // Add a small random offset to each entry's lat/lng to avoid perfect overlap
@@ -165,6 +167,12 @@ function MapPage() {
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null)
+  const [globeAltitude, setGlobeAltitude] = useState(2.0)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showAbout, setShowAbout] = useState(false)
+  const aboutButtonRef = useRef<HTMLButtonElement>(null)
+  const aboutPopupRef = useRef<HTMLDivElement>(null)
+  const aboutOverlayRef = useRef<HTMLDivElement>(null)
 
   // Function to handle selection updates
   const handleSelectCountry = (name: string | null) => {
@@ -239,10 +247,16 @@ function MapPage() {
         { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' },
       )
       .fromTo(
-        [sidebarRef.current, metricsRef.current],
+        [sidebarRef.current, metricsRef.current, logosRef.current],
         { x: -24, opacity: 0 },
         { x: 0, opacity: 1, duration: 0.5, stagger: 0.08, ease: 'power2.out' },
         '-=0.25',
+      )
+      .fromTo(
+        desktopMetricsRef.current,
+        { x: 24, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: 'power2.out' },
+        '<',
       )
       .fromTo(
         globeContainerRef.current,
@@ -260,6 +274,23 @@ function MapPage() {
     }
   }, [location.state])
 
+  // Fullscreen animation logic
+  useLayoutEffect(() => {
+    if (isFullscreen) {
+      // Animate OUT
+      gsap.to(sidebarRef.current, { x: -300, opacity: 0, scale: 0.8, duration: 0.6, ease: 'power2.inOut' })
+      gsap.to(logosRef.current, { x: -200, opacity: 0, scale: 0.8, duration: 0.6, ease: 'power2.inOut' })
+      gsap.to(desktopMetricsRef.current, { x: 300, opacity: 0, scale: 0.8, duration: 0.6, ease: 'power2.inOut' })
+      gsap.to(metricsRef.current, { y: 200, opacity: 0, scale: 0.8, duration: 0.6, ease: 'power2.inOut' })
+    } else {
+      // Animate IN (return to original state)
+      gsap.to(sidebarRef.current, { x: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' })
+      gsap.to(logosRef.current, { x: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' })
+      gsap.to(desktopMetricsRef.current, { x: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' })
+      gsap.to(metricsRef.current, { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' })
+    }
+  }, [isFullscreen])
+
   useEffect(() => {
     const globe = globeRef.current
     if (!globe) {
@@ -267,6 +298,7 @@ function MapPage() {
     }
 
     globe.pointOfView({ lat: 14, lng: 12, altitude: 1.9 }, 0)
+    setTimeout(() => setGlobeAltitude(1.9), 0)
   }, [globeSize.height, globeSize.width])
 
   useEffect(() => {
@@ -297,6 +329,49 @@ function MapPage() {
       .then(res => res.json())
       .then(setCountriesGeo)
   }, [])
+
+  // About Popup initial load and animation logic
+  useEffect(() => {
+    const hasSeenAbout = localStorage.getItem('hasSeenAbout')
+    if (!hasSeenAbout) {
+      setTimeout(() => setShowAbout(true), 1000)
+      localStorage.setItem('hasSeenAbout', 'true')
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    if (showAbout) {
+      gsap.fromTo(aboutOverlayRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.4 }
+      )
+      gsap.fromTo(aboutPopupRef.current,
+        { y: '100dvh', opacity: 0 },
+        { y: '0', opacity: 1, duration: 0.7, ease: 'expo.out' }
+      )
+    }
+  }, [showAbout])
+
+  const closeAbout = () => {
+    if (aboutPopupRef.current && aboutOverlayRef.current) {
+      const tl = gsap.timeline({
+        onComplete: () => setShowAbout(false)
+      })
+
+      tl.to(aboutPopupRef.current, {
+        y: '100dvh',
+        opacity: 0,
+        duration: 0.6,
+        ease: 'expo.in'
+      })
+      .to(aboutOverlayRef.current, {
+        opacity: 0,
+        duration: 0.3
+      }, '-=0.3')
+    } else {
+      setShowAbout(false)
+    }
+  }
 
   return (
     <main ref={pageRef} className="relative h-dvh overflow-hidden bg-[#3a0000] text-white">
@@ -366,10 +441,72 @@ function MapPage() {
                 const entry = point as typeof entryPoints[number]
                 handleSelectEntry(entry.id, entry.countryName)
               }}
+              onZoom={(pov) => {
+                setGlobeAltitude(pov.altitude)
+              }}
             />
           </div>
         )}
       </div>
+
+      <button
+        type="button"
+        onClick={() => setIsFullscreen(!isFullscreen)}
+        className="absolute left-6 top-6 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
+        title={isFullscreen ? "Show UI" : "Fullscreen Mode"}
+      >
+        <Icon icon={isFullscreen ? "mdi:fullscreen-exit" : "mdi:fullscreen"} className="h-6 w-6" />
+      </button>
+
+      <button
+        ref={aboutButtonRef}
+        type="button"
+        onClick={() => setShowAbout(true)}
+        className="absolute right-6 top-6 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
+        title="About ECOSOC"
+      >
+        <Icon icon="mdi:help-circle-outline" className="h-6 w-6" />
+      </button>
+
+      {showAbout && (
+        <div 
+          ref={aboutOverlayRef}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm px-4"
+        >
+          <div 
+            ref={aboutPopupRef}
+            className="relative w-full max-w-md rounded-[20px] bg-[#300c13] p-8 shadow-2xl overflow-hidden"
+          >            
+            <button 
+              onClick={closeAbout}
+              className="absolute top-5 right-5 text-white/40 hover:text-white transition-colors"
+            >
+              <Icon icon="mdi:close" className="h-6 w-6" />
+            </button>
+
+            <h2 className="text-2xl font-bold mb-4 text-white">Good to see you again!</h2>
+            
+            <div className="space-y-4 text-[#e0ced1] text-sm leading-relaxed">
+              <p>
+                It was amazing connecting at the ECOSOC Youth Forum. This map reflects live inputs from participants, showcasing youth innovation ecosystems, funding sources, and other related organizations across countries. It highlights active initiatives as well as key challenges being faced, offering a simple way to understand how these efforts connect across regions.
+              </p>
+              
+              <div className="pt-4 border-t border-white/10">
+                <p className="text-[#e0ced1] font-light">Let's stay in touch!</p>
+                <p className="text-[#e0ced1] font-semibold mt-2">Ethan Yip</p>
+                <p className="text-xs font-medium text-[#b3969a]">Founder  -  HTSI</p>
+              </div>
+            </div>
+
+            <button
+              onClick={closeAbout}
+              className="mt-8 w-full py-3 rounded-2xl bg-[#B14242] hover:bg-[#8e3535] text-white font-bold transition-all shadow-lg active:scale-[0.98]"
+            >
+              Get Started
+            </button>
+          </div>
+        </div>
+      )}
 
       <div ref={headerRef} className="absolute left-1/2 top-5 z-20 w-[min(488px,calc(100%-1.5rem))] -translate-x-1/2 rounded-[25px] bg-[rgba(255,255,255,0.08)] p-[12px] backdrop-blur-[18px] md:top-8 md:w-[min(488px,calc(100%-2rem))] md:p-[15px]">
         <div className="relative mb-[5px] flex min-h-10 items-center justify-center md:min-h-0">
@@ -392,7 +529,18 @@ function MapPage() {
         </div>
       </div>
 
-      <section className="pointer-events-none relative z-10 h-full px-4 pb-4 pt-36 md:px-6 md:pb-6 md:pt-40 flex flex-col justify-between">
+      <section 
+        className={`pointer-events-none relative z-10 h-full px-4 pb-4 pt-36 md:px-6 md:pb-6 md:pt-40 flex flex-col justify-between`}
+      >
+        {/* Logos bottom left */}
+        <div 
+          ref={logosRef}
+          className="absolute origin-bottom-left scale-[1.3] bottom-6 left-6 z-20 flex items-center transition-opacity duration-500 pointer-events-none hidden md:flex"
+          style={{ opacity: Math.max(0, Math.min(1, (globeAltitude - 1.2) * 2)) }}
+        >
+          <img src="/htsi_logo.png" alt="HTSI Logo" className="h-20 w-20 object-contain opacity-80" />
+          <img src="/ecosoc_logo.png" alt="ECOSOC Logo" className="h-24 object-contain opacity-80" />
+        </div>
 
         <aside ref={sidebarRef} className="pointer-events-auto w-[320px] max-h-full overflow-hidden m-3 rounded-[20px] bg-[rgba(255,255,255,0.08)] p-5 backdrop-blur-[30px] hidden md:flex md:flex-col">
           <div className="flex flex-col h-full overflow-hidden">
@@ -400,11 +548,11 @@ function MapPage() {
             
             <div className="flex-1 overflow-hidden flex flex-col">
               {!selectedEntryId && !selectedCountry && !hoveredCountry ? (
-                <p className="text-sm text-[#c4d0e8]">Click a point to view entry details or hover to see country summary.</p>
+                <p className="text-sm text-[#e0ced1]">Click a point to view entry details or hover to see country summary.</p>
               ) : selectedEntryId ? (
                 (() => {
                   const entry = entryPoints.find(e => e.id === selectedEntryId)
-                  if (!entry) return <p className="text-sm text-[#c4d0e8]">Entry not found.</p>
+                  if (!entry) return <p className="text-sm text-[#e0ced1]">Entry not found.</p>
                   return (
                     <div className="flex-1 flex flex-col overflow-hidden">
                       <article className="rounded-lg bg-white/5 p-3 flex flex-col gap-1 overflow-y-auto">
@@ -412,7 +560,7 @@ function MapPage() {
                         {entry.organizationDescription && (
                           <p className="text-xs text-[#e0e0e0] italic mb-1 whitespace-pre-line">{entry.organizationDescription}</p>
                         )}
-                        <ul className="mt-1 mb-1 space-y-1 text-xs text-[#c4d0e8]">
+                        <ul className="mt-1 mb-1 space-y-1 text-xs text-[#e0ced1]">
                           <li><span className="font-semibold text-[#B14242]">{CONSTRAINT_LABELS[entry.primaryConstraint] || entry.primaryConstraint}</span></li>
                           <li>{ROLE_LABELS[entry.roleType] || entry.roleType}</li>
                           <li>{FOCUS_LABELS[entry.focusArea] || entry.focusArea}</li>
@@ -431,20 +579,20 @@ function MapPage() {
                 (() => {
                   const country = selectedCountry || hoveredCountry
                   const meta = countryMeta.get(country!)
-                  if (!meta) return <p className="text-sm text-[#c4d0e8]">No entries in this country.</p>
+                  if (!meta) return <p className="text-sm text-[#e0ced1]">No entries in this country.</p>
                   return (
                     <div className="flex-1 flex flex-col overflow-hidden">
                       <div className="space-y-3 shrink-0">
                         <div className="rounded-lg bg-white/5 p-3">
-                          <p className="text-xs text-[#c4d0e8]">Country {hoveredCountry && !selectedCountry && '(Hovered)'}</p>
+                          <p className="text-xs text-[#e0ced1]">Country {hoveredCountry && !selectedCountry && '(Hovered)'}</p>
                           <p className="text-base font-semibold text-white">{country}</p>
                         </div>
                         <div className="rounded-lg bg-white/5 p-3">
-                          <p className="text-xs text-[#c4d0e8]">Entries</p>
+                          <p className="text-xs text-[#e0ced1]">Entries</p>
                           <p className="text-base font-semibold text-white">{formatNumber(meta.count)}</p>
                         </div>
                         <div className="rounded-lg bg-white/5 p-3">
-                          <p className="text-xs text-[#c4d0e8]">Estimated Reach</p>
+                          <p className="text-xs text-[#e0ced1]">Estimated Reach</p>
                           <p className="text-base font-semibold text-white">{formatNumber(meta.totalReach)}</p>
                         </div>
                       </div>
@@ -477,7 +625,7 @@ function MapPage() {
                                 className={`rounded-lg bg-white/10 p-2 flex flex-col gap-1 h-full min-h-[64px] transition-all duration-300 ${!expandedCountry && idx >= 4 ? 'blur-[1px]' : ''}`}
                               >
                                 <span className="text-[11px] text-white font-semibold line-clamp-2 leading-tight">{entry.organizationName || 'Untitled Organization'}</span>
-                                <span className="text-[10px] text-[#c4d0e8] mt-auto">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
+                                <span className="text-[10px] text-[#e0ced1] mt-auto">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
                               </article>
                             )
                           ))}
@@ -504,7 +652,7 @@ function MapPage() {
               <p className="text-[10px] font-bold text-[#b8c5df] uppercase tracking-wider">Legend (Focus Area)</p>
               <div className="grid grid-cols-1 gap-1.5">
                 {Object.entries(FOCUS_LABELS).map(([id, label]) => (
-                  <div key={id} className="flex items-center gap-2 text-[11px] text-[#c4d0e8]">
+                  <div key={id} className="flex items-center gap-2 text-[11px] text-[#e0ced1]">
                     <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: FOCUS_COLOR[id as keyof typeof FOCUS_COLOR] }} />
                     <span>{label}</span>
                   </div>
@@ -517,7 +665,10 @@ function MapPage() {
         <div className="flex-1" />
 
         {/* Desktop metrics group (bottom right, desktop only, fixed) */}
-        <div className="hidden md:fixed md:bottom-6 md:right-6 md:z-30 md:flex md:flex-row md:gap-3 md:max-w-[560px]">
+        <div 
+          ref={desktopMetricsRef}
+          className="hidden md:fixed md:bottom-6 md:right-6 md:z-30 md:flex md:flex-row md:gap-3 md:max-w-[560px]"
+        >
           <div className="rounded-lg bg-[rgba(255,255,255,0.12)] px-5 py-3 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white text-center min-w-[110px]">
             <div className="text-xs text-[#9fb0d0]">Total Entries</div>
             <div className="text-lg font-bold text-white">{formatNumber(metrics.totalEntries)}</div>
@@ -543,7 +694,7 @@ function MapPage() {
           {/* Mobile Legend - Always visible on mobile, above metrics if bottom bar closed */}
           <div className="mb-3 flex w-[calc(100vw-24px)] max-w-[560px] flex-wrap justify-center gap-x-3 gap-y-1.5 rounded-[15px] bg-[rgba(255,255,255,0.08)] p-3 backdrop-blur-[18px]">
             {Object.entries(FOCUS_LABELS).map(([id, label]) => (
-              <div key={id} className="flex items-center gap-1.5 text-[10px] text-[#c4d0e8]">
+              <div key={id} className="flex items-center gap-1.5 text-[10px] text-[#e0ced1]">
                 <div className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: FOCUS_COLOR[id as keyof typeof FOCUS_COLOR] }} />
                 <span>{label}</span>
               </div>
@@ -581,7 +732,7 @@ function MapPage() {
             ) : selectedEntryId ? (
               (() => {
                 const entry = entryPoints.find(e => e.id === selectedEntryId)
-                if (!entry) return <p className="text-sm text-[#c4d0e8]">Entry not found.</p>
+                if (!entry) return <p className="text-sm text-[#e0ced1]">Entry not found.</p>
                 return (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-3">
@@ -599,7 +750,7 @@ function MapPage() {
                       {entry.organizationDescription && (
                         <p className="text-xs text-[#e0e0e0] italic mb-1 whitespace-pre-line">{entry.organizationDescription}</p>
                       )}
-                      <ul className="mt-1 mb-1 space-y-1 text-xs text-[#c4d0e8]">
+                      <ul className="mt-1 mb-1 space-y-1 text-xs text-[#e0ced1]">
                         <li><span className="font-semibold text-[#B14242]">{CONSTRAINT_LABELS[entry.primaryConstraint] || entry.primaryConstraint}</span></li>
                         <li>{ROLE_LABELS[entry.roleType] || entry.roleType}</li>
                         <li>{FOCUS_LABELS[entry.focusArea] || entry.focusArea}</li>
@@ -632,7 +783,7 @@ function MapPage() {
                         </button>
                       </div>
                       <div className="rounded-lg bg-white/5 p-4 text-center">
-                        <p className="text-sm text-[#c4d0e8]">No entries found</p>
+                        <p className="text-sm text-[#e0ced1]">No entries found</p>
                       </div>
                     </div>
                   )
@@ -653,11 +804,11 @@ function MapPage() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <div className="rounded-lg  bg-white/5 p-2.5">
-                        <p className="text-[11px] text-[#c4d0e8]">Entries</p>
+                        <p className="text-[11px] text-[#e0ced1]">Entries</p>
                         <p className="text-sm font-semibold text-white">{compactNumber(meta.count)}</p>
                       </div>
                       <div className="rounded-lg  bg-white/5 p-2.5">
-                        <p className="text-[11px] text-[#c4d0e8]">Est. Reach</p>
+                        <p className="text-[11px] text-[#e0ced1]">Est. Reach</p>
                         <p className="text-sm font-semibold text-white">{compactNumber(meta.totalReach)}</p>
                       </div>
                     </div>
@@ -666,7 +817,7 @@ function MapPage() {
                       {meta.entries.map((entry) => (
                         <article key={entry.id} className="rounded-lg bg-white/10 p-2 flex flex-col gap-1">
                           <span className="text-xs text-white font-semibold">{entry.organizationName || 'Untitled Organization'}</span>
-                          <span className="text-xs text-[#c4d0e8]">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
+                          <span className="text-xs text-[#e0ced1]">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
                         </article>
                       ))}
                     </div>
