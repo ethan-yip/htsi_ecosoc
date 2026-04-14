@@ -184,6 +184,17 @@ function MapPage() {
     setSelectedEntryId(id)
     setSelectedCountry(countryName)
     setExpandedCountry(null)
+
+    if (id && globeRef.current) {
+      const entry = entryPoints.find(e => e.id === id)
+      if (entry) {
+        globeRef.current.pointOfView({
+          lat: entry.lat,
+          lng: entry.lng,
+          altitude: 0.8
+        }, 1000)
+      }
+    }
   }
 
   const closeMobileBottomBar = () => {
@@ -625,9 +636,10 @@ function MapPage() {
                             entry && (
                               <article 
                                 key={entry.id} 
-                                className={`rounded-lg bg-white/10 p-2 flex flex-col gap-1 h-full min-h-[64px] transition-all duration-300 ${!expandedCountry && idx >= 4 ? 'blur-[1px]' : ''}`}
+                                onClick={() => handleSelectEntry(entry.id, entry.countryName)}
+                                className={`group cursor-pointer rounded-lg bg-white/10 p-2 flex flex-col gap-1 h-full min-h-[64px] transition-all duration-300 hover:bg-white/20 active:scale-[0.98] ${!expandedCountry && idx >= 4 ? 'blur-[1px]' : ''}`}
                               >
-                                <span className="text-[11px] text-white font-semibold line-clamp-2 leading-tight">{entry.organizationName || 'Untitled Organization'}</span>
+                                <span className="text-[11px] text-white font-semibold line-clamp-2 leading-tight group-hover:text-[#ff9a9e] transition-colors">{entry.organizationName || 'Untitled Organization'}</span>
                                 <span className="text-[10px] text-[#e0ced1] mt-auto">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
                               </article>
                             )
@@ -839,8 +851,12 @@ function MapPage() {
 
                     <div className="max-h-[30dvh] space-y-2 overflow-y-auto pr-1">
                       {meta.entries.map((entry) => (
-                        <article key={entry.id} className="rounded-lg bg-white/10 p-2 flex flex-col gap-1">
-                          <span className="text-xs text-white font-semibold">{entry.organizationName || 'Untitled Organization'}</span>
+                        <article 
+                          key={entry.id} 
+                          onClick={() => handleSelectEntry(entry.id, entry.countryName)}
+                          className="group active:scale-[0.98] transition-transform cursor-pointer rounded-lg bg-white/10 p-2 flex flex-col gap-1"
+                        >
+                          <span className="text-xs text-white font-semibold group-active:text-[#ff9a9e] transition-colors">{entry.organizationName || 'Untitled Organization'}</span>
                           <span className="text-xs text-[#e0ced1]">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
                         </article>
                       ))}
