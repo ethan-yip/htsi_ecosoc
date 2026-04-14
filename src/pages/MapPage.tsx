@@ -36,7 +36,6 @@ import { getEntryMetrics, FOCUS_COLOR } from '../lib/map/clusterEntries'
 import { getCountryByCode, getStateByCode } from '../lib/map/countryCentroids'
 import { useEntries } from '../lib/supabase/useEntries'
 
-const MAP_BG_IMAGE = 'http://localhost:3845/assets/770f7ff9674360b50f642756ea594971e9dabd10.png'
 const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson'
 
 function formatNumber(value: number): string {
@@ -379,8 +378,8 @@ function MapPage() {
   return (
     <main ref={pageRef} className="relative h-dvh overflow-hidden bg-[#3a0000] text-white">
       <div className="absolute inset-0 z-0">
-        <img src={MAP_BG_IMAGE} alt="" className="h-full w-full object-cover opacity-35" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(128,0,32,0.28),transparent_45%),radial-gradient(circle_at_80%_75%,rgba(90,0,25,0.22),transparent_40%),linear-gradient(180deg,rgba(8,13,24,0.82),rgba(8,13,24,0.92))]" />      </div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(128,0,32,0.28),transparent_45%),radial-gradient(circle_at_80%_75%,rgba(90,0,25,0.22),transparent_40%),linear-gradient(180deg,rgba(8,13,24,0.82),rgba(8,13,24,0.92))]" />
+      </div>
 
       <div ref={globeContainerRef} className="absolute inset-0 z-[5]">
         {isLoading ? (
@@ -546,7 +545,7 @@ function MapPage() {
           <img src="/ecosoc_logo.png" alt="ECOSOC Logo" className="h-24 object-contain opacity-80" />
         </div>
 
-        <aside ref={sidebarRef} className="pointer-events-auto w-[320px] max-h-full overflow-hidden m-3 rounded-[20px] bg-[rgba(255,255,255,0.08)] p-5 backdrop-blur-[30px] hidden md:flex md:flex-col">
+        <aside ref={sidebarRef} className="z-1000 pointer-events-auto w-[320px] max-h-full overflow-hidden m-3 rounded-[20px] bg-[rgba(255,255,255,0.08)] p-5 backdrop-blur-[30px] hidden md:flex md:flex-col">
           <div className="flex flex-col h-full overflow-hidden">
             <h2 className="mb-3 text-base font-semibold text-white">Details</h2>
             
