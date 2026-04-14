@@ -8,6 +8,7 @@ import { ButtonGroup } from './ButtonGroup'
 import { OptionDropdown } from './OptionDropdown'
 import { TextInput } from './TextInput'
 import { FormActions } from './FormActions'
+import { Link } from 'react-router'
 
 const ROLE_OPTIONS = [
   { id: 'youth-program-operator', label: 'Youth Program Operator', description: 'Runs programs' },
@@ -73,23 +74,22 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
   return (
     <div className="flex h-full w-full max-w-2xl flex-col rounded-[15px] py-[clamp(10px,1.8vh,22px)] md:h-[calc(100dvh-16px)] md:w-[min(50vw,720px)] md:max-w-none md:px-8">
       {/* Header */}
-      <div className="home-form-anim mb-[clamp(12px,2vh,24px)] hidden w-full justify-center text-center md:flex">
-        <h1 className="text-xl font-bold text-white px-[20px] py-[15px] bg-white/10 w-fit rounded-xl">Map App Thingy</h1>
+
+      <div className="relative">
+        <Link
+          to="/"
+          className="absolute left-0 top-3 z-20 hidden items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-[#e0e0e0] backdrop-blur-[12px] transition hover:bg-white/20 md:inline-flex"
+        >
+          <Icon icon="mdi:arrow-left" className="h-4 w-4" />
+          Back
+        </Link>
+        <div className="home-form-anim mb-[clamp(12px,2vh,24px)] hidden w-full justify-center text-center md:flex">
+          <h1 className="text-xl font-bold text-white px-[20px] py-[15px] bg-white/10 w-fit rounded-xl">Map App Thingy</h1>
+        </div>
       </div>
 
       {/* Tab Navigation (Desktop) */}
       <div className="home-form-anim mb-[clamp(10px,1.6vh,14px)] hidden w-full gap-1 rounded-[22px] bg-[rgba(255,255,255,0.08)] p-1 md:inline-flex">
-        <button
-          onClick={() => setActiveTab('input')}
-          className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-[18px] px-4 text-sm font-medium transition-all ${
-            activeTab === 'input'
-              ? 'bg-[rgba(255,255,255,0.1)] text-[#e0e0e0]'
-              : 'text-[#8e8e8e] hover:text-[#e0e0e0]'
-          }`}
-        >
-          <Icon icon="mdi:list-box-outline" className="h-6 w-6 shrink-0 text-current" />
-          <span>Input View</span>
-        </button>
         <button
           onClick={() => setActiveTab('map')}
           className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-[18px] px-4 text-sm font-medium transition-all ${
@@ -100,6 +100,17 @@ export function FormInputView({ activeTab, setActiveTab }: FormInputViewProps) {
         >
           <Icon icon="mdi-light:map-marker" className="h-6 w-6 shrink-0 text-current" />
           <span>Map</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('input')}
+          className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-[18px] px-4 text-sm font-medium transition-all ${
+            activeTab === 'input'
+              ? 'bg-[rgba(255,255,255,0.1)] text-[#e0e0e0]'
+              : 'text-[#8e8e8e] hover:text-[#e0e0e0]'
+          }`}
+        >
+          <Icon icon="mdi:list-box-outline" className="h-6 w-6 shrink-0 text-current" />
+          <span>Input View</span>
         </button>
       </div>
 

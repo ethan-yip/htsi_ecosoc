@@ -1,5 +1,5 @@
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router'
-import HomePage from './pages/HomePage'
+import InputPage from './pages/InputPage'
 import MapPage from './pages/MapPage'
 
 import "@fontsource-variable/roboto/wght.css";
@@ -7,11 +7,11 @@ import "@fontsource-variable/roboto/wght.css";
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <HomePage />,
+    element: <MapPage />,
   },
   {
-    path: '/map',
-    element: <MapPage />,
+    path: '/input',
+    element: <InputPage />,
   },
   {
     path: '*',

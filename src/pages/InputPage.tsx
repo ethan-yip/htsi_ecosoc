@@ -5,7 +5,7 @@ import gsap from 'gsap'
 import { FormProvider } from '../lib/form/FormContext'
 import { FormInputView } from '../components/FormInputView'
 
-function HomePage() {
+function InputPage() {
   const [activeTab, setActiveTab] = useState<'input' | 'map'>('input')
   const [isTransitioning, setIsTransitioning] = useState(false)
   const location = useLocation()
@@ -61,7 +61,7 @@ function HomePage() {
 
     const timeline = gsap.timeline({
       onComplete: () => {
-        navigate('/map', { state: { fromHome: true } })
+        navigate('/', { state: { fromHome: true } })
       },
     })
 
@@ -125,4 +125,4 @@ function HomePage() {
   )
 }
 
-export default HomePage
+export default InputPage

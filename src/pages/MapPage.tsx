@@ -177,7 +177,7 @@ function MapPage() {
 
     const timeline = gsap.timeline({
       onComplete: () => {
-        navigate('/', { state: { fromMap: true } })
+        navigate('/input', { state: { fromMap: true } })
       },
     })
 
@@ -361,7 +361,7 @@ function MapPage() {
       <div ref={headerRef} className="absolute left-1/2 top-5 z-20 w-[min(488px,calc(100%-1.5rem))] -translate-x-1/2 rounded-[25px] bg-[rgba(255,255,255,0.08)] p-[12px] backdrop-blur-[18px] md:top-8 md:w-[min(488px,calc(100%-2rem))] md:p-[15px]">
         <div className="relative mb-[5px] flex min-h-10 items-center justify-center md:min-h-0">
           <Link
-            to="/"
+            to="/input"
             onClick={animateBackToHome}
             className="absolute left-0 inline-flex items-center gap-1 rounded-lg bg-white/10 px-2.5 py-1.5 text-xs font-medium text-[#e0e0e0] backdrop-blur-[12px] transition hover:bg-white/20 md:hidden"
           >
@@ -372,29 +372,20 @@ function MapPage() {
         </div>
 
         <div className="grid grid-cols-2 rounded-[35px] bg-[rgba(255,255,255,0.1)] p-[2px]">
+          <div className="flex h-9 items-center justify-center gap-2 rounded-[20px] bg-[rgba(255,255,255,0.1)] text-sm font-bold text-white">
+            <Icon icon="mdi-light:map-marker" className="h-[22px] w-[22px]" />
+            <span>Map</span>
+          </div>
           <Link
-            to="/"
+            to="/input"
             onClick={animateBackToHome}
             className="flex h-9 items-center justify-center gap-2 rounded-[20px] text-sm font-medium text-[#cfcfcf] transition hover:text-[#e6e6e6]"
           >
             <Icon icon="mdi:list-box-outline" className="h-[22px] w-[22px]" />
             <span>Input View</span>
           </Link>
-          <div className="flex h-9 items-center justify-center gap-2 rounded-[20px] bg-[rgba(255,255,255,0.1)] text-sm font-bold text-white">
-            <Icon icon="mdi-light:map-marker" className="h-[22px] w-[22px]" />
-            <span>Map</span>
-          </div>
         </div>
       </div>
-
-      <Link
-        to="/"
-        onClick={animateBackToHome}
-        className="absolute right-6 top-6 z-20 hidden items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-[#e0e0e0] backdrop-blur-[12px] transition hover:bg-white/20 md:inline-flex"
-      >
-        <Icon icon="mdi:arrow-left" className="h-4 w-4" />
-        Back
-      </Link>
 
       <section className="pointer-events-none relative z-10 h-full px-4 pb-4 pt-36 md:px-6 md:pb-6 md:pt-40 flex flex-col justify-between">
 
