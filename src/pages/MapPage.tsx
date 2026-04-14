@@ -35,19 +35,26 @@ import gsap from 'gsap'
 import { getEntryMetrics, FOCUS_COLOR } from '../lib/map/clusterEntries'
 import { getCountryByCode, getStateByCode } from '../lib/map/countryCentroids'
 import { useEntries } from '../lib/supabase/useEntries'
-import type { CountryCluster } from '../lib/map/clusterEntries'
 
 const MAP_BG_IMAGE = 'http://localhost:3845/assets/770f7ff9674360b50f642756ea594971e9dabd10.png'
+const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson'
 
 function formatNumber(value: number): string {
   return new Intl.NumberFormat('en-US').format(value)
+}
+
+function compactNumber(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value)
 }
 
 function MapPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const { entries, isLoading, error, reload } = useEntries()
-  const [selectedCluster, setSelectedCluster] = useState<CountryCluster | null>(null)
+  const [countriesGeo, setCountriesGeo] = useState({ features: [] })
   const [globeSize, setGlobeSize] = useState({ width: 0, height: 0 })
   const [isLeaving, setIsLeaving] = useState(false)
   const pageRef = useRef<HTMLElement>(null)
@@ -147,6 +154,7 @@ function MapPage() {
   // Selection: either an entry (by id) or a country (by name)
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
+  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null)
 
   const animateBackToHome = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
@@ -256,6 +264,12 @@ function MapPage() {
     }
   }, [])
 
+  useEffect(() => {
+    fetch(GEOJSON_URL)
+      .then(res => res.json())
+      .then(setCountriesGeo)
+  }, [])
+
   return (
     <main ref={pageRef} className="relative h-dvh overflow-hidden bg-[#0d1320] text-white">
       <div className="absolute inset-0 z-0">
@@ -285,6 +299,33 @@ function MapPage() {
               backgroundColor="rgba(0,0,0,0)"
               globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
               bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+              
+              polygonsData={countriesGeo.features}
+              polygonSideColor={() => 'rgba(255, 255, 255, 0.05)'}
+              polygonStrokeColor={() => '#111'}
+              polygonCapColor={(d: object) => {
+                const properties = (d as { properties: Record<string, string> }).properties;
+                const name = properties.NAME || properties.ADMIN
+                if (selectedCountry === name) return 'rgba(61, 110, 201, 0.4)'
+                if (hoveredCountry === name) return 'rgba(61, 110, 201, 0.2)'
+                return 'transparent'
+              }}
+              onPolygonHover={(d: object | null) => {
+                const properties = (d as { properties: Record<string, string> } | null)?.properties;
+                const name = properties?.NAME || properties?.ADMIN || null
+                setHoveredCountry(name)
+              }}
+              onPolygonClick={(d: object) => {
+                const properties = (d as { properties: Record<string, string> }).properties;
+                const name = properties.NAME || properties.ADMIN
+                setSelectedCountry(name)
+                setSelectedEntryId(null)
+              }}
+              polygonLabel={(d: object) => {
+                const properties = (d as { properties: Record<string, string> }).properties;
+                return properties.NAME || properties.ADMIN;
+              }}
+
               pointsData={entryPoints}
               pointLat="lat"
               pointLng="lng"
@@ -343,69 +384,86 @@ function MapPage() {
         Back
       </Link>
 
-      <section className="pointer-events-none relative z-10 h-full px-4 pb-4 pt-36 md:px-6 md:pb-6 md:pt-40">
+      <section className="pointer-events-none relative z-10 h-full px-4 pb-4 pt-36 md:px-6 md:pb-6 md:pt-40 flex flex-col justify-between">
 
-        <aside ref={sidebarRef} className="pointer-events-auto absolute bottom-0 left-0 top-0 hidden w-[285px] overflow-y-auto m-3 rounded-[20px] bg-[rgba(255,255,255,0.08)] p-5 backdrop-blur-[30px] md:block">
-          <h2 className="mb-3 text-base font-semibold text-white">Details</h2>
-          {!selectedEntryId && !selectedCountry ? (
-            <p className="text-sm text-[#c4d0e8]">Click a point to view entry details.</p>
-          ) : selectedEntryId ? (
-            (() => {
-              const entry = entryPoints.find(e => e.id === selectedEntryId)
-              if (!entry) return <p className="text-sm text-[#c4d0e8]">Entry not found.</p>
-              return (
-                <article className="rounded-lg bg-white/5 p-3 flex flex-col gap-1">
-                  <p className="text-sm font-bold text-white whitespace-pre-line">{entry.organizationName || 'Untitled Organization'}</p>
-                  {entry.organizationDescription && (
-                    <p className="text-xs text-[#e0e0e0] italic mb-1 whitespace-pre-line">{entry.organizationDescription}</p>
-                  )}
-                  <ul className="mt-1 mb-1 space-y-1 text-xs text-[#c4d0e8]">
-                    <li><span className="font-semibold text-[#f2b223]">{CONSTRAINT_LABELS[entry.primaryConstraint] || entry.primaryConstraint}</span></li>
-                    <li>{ROLE_LABELS[entry.roleType] || entry.roleType}</li>
-                    <li>{FOCUS_LABELS[entry.focusArea] || entry.focusArea}</li>
-                    {entry.estimatedReach > 0 && <li><span className="text-[#b8e986]">Reach: {formatNumber(entry.estimatedReach)}</span></li>}
-                  </ul>
-                  {entry.contact && (
-                    <div className="pt-1 mt-1 border-t border-white/10">
-                      <span className="text-xs text-[#d9e7ff] break-all">{entry.contact}</span>
-                    </div>
-                  )}
-                </article>
-              )
-            })()
-          ) : (
-            (() => {
-              const meta = countryMeta.get(selectedCountry!)
-              if (!meta) return <p className="text-sm text-[#c4d0e8]">Country not found.</p>
-              return (
-                <div className="space-y-3">
-                  <div className="rounded-lg bg-white/5 p-3">
-                    <p className="text-xs text-[#c4d0e8]">Country</p>
-                    <p className="text-base font-semibold text-white">{selectedCountry}</p>
-                  </div>
-                  <div className="rounded-lg bg-white/5 p-3">
-                    <p className="text-xs text-[#c4d0e8]">Entries</p>
-                    <p className="text-base font-semibold text-white">{formatNumber(meta.count)}</p>
-                  </div>
-                  <div className="rounded-lg bg-white/5 p-3">
-                    <p className="text-xs text-[#c4d0e8]">Estimated Reach</p>
-                    <p className="text-base font-semibold text-white">{formatNumber(meta.totalReach)}</p>
-                  </div>
+        <aside ref={sidebarRef} className="pointer-events-auto w-[285px] max-h-[70%] overflow-y-auto m-3 rounded-[20px] bg-[rgba(255,255,255,0.08)] p-5 backdrop-blur-[30px] hidden md:flex md:flex-col">
+          <div className="flex-1 overflow-y-auto pr-1">
+            <h2 className="mb-3 text-base font-semibold text-white">Details</h2>
+            {!selectedEntryId && !selectedCountry && !hoveredCountry ? (
+              <p className="text-sm text-[#c4d0e8]">Click a point to view entry details or hover to see country summary.</p>
+            ) : selectedEntryId ? (
+              (() => {
+                const entry = entryPoints.find(e => e.id === selectedEntryId)
+                if (!entry) return <p className="text-sm text-[#c4d0e8]">Entry not found.</p>
+                return (
+                  <article className="rounded-lg bg-white/5 p-3 flex flex-col gap-1">
+                    <p className="text-sm font-bold text-white whitespace-pre-line">{entry.organizationName || 'Untitled Organization'}</p>
+                    {entry.organizationDescription && (
+                      <p className="text-xs text-[#e0e0e0] italic mb-1 whitespace-pre-line">{entry.organizationDescription}</p>
+                    )}
+                    <ul className="mt-1 mb-1 space-y-1 text-xs text-[#c4d0e8]">
+                      <li><span className="font-semibold text-[#f2b223]">{CONSTRAINT_LABELS[entry.primaryConstraint] || entry.primaryConstraint}</span></li>
+                      <li>{ROLE_LABELS[entry.roleType] || entry.roleType}</li>
+                      <li>{FOCUS_LABELS[entry.focusArea] || entry.focusArea}</li>
+                      {entry.estimatedReach > 0 && <li><span className="text-[#b8e986]">Reach: {formatNumber(entry.estimatedReach)}</span></li>}
+                    </ul>
+                    {entry.contact && (
+                      <div className="pt-1 mt-1 border-t border-white/10">
+                        <span className="text-xs text-[#d9e7ff] break-all">{entry.contact}</span>
+                      </div>
+                    )}
+                  </article>
+                )
+              })()
+            ) : (
+              (() => {
+                const country = selectedCountry || hoveredCountry
+                const meta = countryMeta.get(country!)
+                if (!meta) return <p className="text-sm text-[#c4d0e8]">No entries in this country.</p>
+                return (
                   <div className="space-y-3">
-                    {meta.entries.map((entry) => (
-                      entry && (
-                        <article key={entry.id} className="rounded-lg bg-white/10 p-2 flex flex-col gap-1">
-                          <span className="text-xs text-white font-semibold">{entry.organizationName || 'Untitled Organization'}</span>
-                          <span className="text-xs text-[#c4d0e8]">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
-                        </article>
-                      )
-                    ))}
+                    <div className="rounded-lg bg-white/5 p-3">
+                      <p className="text-xs text-[#c4d0e8]">Country {hoveredCountry && !selectedCountry && '(Hovered)'}</p>
+                      <p className="text-base font-semibold text-white">{country}</p>
+                    </div>
+                    <div className="rounded-lg bg-white/5 p-3">
+                      <p className="text-xs text-[#c4d0e8]">Entries</p>
+                      <p className="text-base font-semibold text-white">{formatNumber(meta.count)}</p>
+                    </div>
+                    <div className="rounded-lg bg-white/5 p-3">
+                      <p className="text-xs text-[#c4d0e8]">Estimated Reach</p>
+                      <p className="text-base font-semibold text-white">{formatNumber(meta.totalReach)}</p>
+                    </div>
+                    <div className="space-y-3">
+                      {meta.entries.map((entry) => (
+                        entry && (
+                          <article key={entry.id} className="rounded-lg bg-white/10 p-2 flex flex-col gap-1">
+                            <span className="text-xs text-white font-semibold">{entry.organizationName || 'Untitled Organization'}</span>
+                            <span className="text-xs text-[#c4d0e8]">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
+                          </article>
+                        )
+                      ))}
+                    </div>
                   </div>
+                )
+              })()
+            )}
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-white/10 space-y-2">
+            <p className="text-[10px] font-bold text-[#b8c5df] uppercase tracking-wider">Legend (Focus Area)</p>
+            <div className="grid grid-cols-1 gap-1.5">
+              {Object.entries(FOCUS_LABELS).map(([id, label]) => (
+                <div key={id} className="flex items-center gap-2 text-[11px] text-[#c4d0e8]">
+                  <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: FOCUS_COLOR[id as keyof typeof FOCUS_COLOR] }} />
+                  <span>{label}</span>
                 </div>
-              )
-            })()
-          )}
+              ))}
+            </div>
+          </div>
         </aside>
+
+        <div className="flex-1" />
 
         {/* Desktop metrics group (bottom right, desktop only, fixed) */}
         <div className="hidden md:fixed md:bottom-6 md:right-6 md:z-30 md:flex md:flex-row md:gap-3 md:max-w-[560px]">
@@ -428,24 +486,24 @@ function MapPage() {
           className={`fixed left-0 right-0 z-30 flex flex-col items-center transition-transform duration-300 md:hidden`}
           style={{
             bottom: 0,
-            transform: selectedCluster ? 'translateY(0)' : 'translateY(calc(100% - 115px))',
+            transform: (selectedEntryId || selectedCountry) ? 'translateY(0)' : 'translateY(calc(100% - 115px))',
           }}
         >
           <div
             ref={metricsRef}
-            className="pointer-events-none mb-2 flex w-[calc(100vw-32px)] max-w-[560px] flex-row items-end justify-center gap-2"
+            className="pointer-events-none mb-2 flex w-[calc(100vw-24px)] max-w-[560px] flex-row items-end justify-center gap-2"
           >
-            <div className="rounded-[10px]  bg-[rgba(255,255,255,0.12)] px-3 py-2 flex flex-row items-center justify-between gap-2 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white">
+            <div className="rounded-[10px] flex-1 bg-[rgba(255,255,255,0.12)] px-3 py-2 flex flex-row items-center justify-between gap-2 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white">
               <span className="text-[11px] text-[#9fb0d0]">Total Entries</span>
-              <span className="ml-2 text-base font-bold text-white">{formatNumber(metrics.totalEntries)}</span>
+              <span className="ml-2 text-base font-bold text-white">{compactNumber(metrics.totalEntries)}</span>
             </div>
-            <div className="rounded-[10px]  bg-[rgba(255,255,255,0.12)] px-3 py-2 flex flex-row items-center justify-between gap-2 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white">
-              <span className="text-[11px] text-[#9fb0d0]">Estimated Reach</span>
-              <span className="ml-2 text-base font-bold text-white">{formatNumber(metrics.totalReach)}</span>
+            <div className="rounded-[10px] flex-1 bg-[rgba(255,255,255,0.12)] px-3 py-2 flex flex-row items-center justify-between gap-2 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white">
+              <span className="text-[11px] text-[#9fb0d0]">Est. Reach</span>
+              <span className="ml-2 text-base font-bold text-white">{compactNumber(metrics.totalReach)}</span>
             </div>
-            <div className="rounded-[10px]  bg-[rgba(255,255,255,0.12)] px-3 py-2 flex flex-row items-center justify-between gap-2 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white">
+            <div className="rounded-[10px] flex-1 bg-[rgba(255,255,255,0.12)] px-3 py-2 flex flex-row items-center justify-between gap-2 shadow-sm backdrop-blur-[18px] text-xs font-medium text-white">
               <span className="text-[11px] text-[#9fb0d0]">Countries</span>
-              <span className="ml-2 text-base font-bold text-white">{formatNumber(metrics.countryCount)}</span>
+              <span className="ml-2 text-base font-bold text-white">{compactNumber(metrics.countryCount)}</span>
             </div>
           </div>
           
@@ -454,39 +512,31 @@ function MapPage() {
           >
             <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-white/35" />
 
-            {!selectedCluster ? (
+            {!selectedEntryId && !selectedCountry ? (
               <div>
-                <p className="text-sm font-semibold text-white/60">Click a country point to view details</p>
+                <p className="text-sm font-semibold text-white/60">Click a point to view details</p>
               </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-white">{selectedCluster.country}</p>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCluster(null)}
-                    className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-xs font-medium text-[#d9e7ff]"
-                  >
-                    <Icon icon="mdi:close" className="h-3.5 w-3.5" />
-                    Close
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg  bg-white/5 p-2.5">
-                    <p className="text-[11px] text-[#c4d0e8]">Entries</p>
-                    <p className="text-sm font-semibold text-white">{formatNumber(selectedCluster.count)}</p>
-                  </div>
-                  <div className="rounded-lg  bg-white/5 p-2.5">
-                    <p className="text-[11px] text-[#c4d0e8]">Est. Reach</p>
-                    <p className="text-sm font-semibold text-white">{formatNumber(selectedCluster.totalReach)}</p>
-                  </div>
-                </div>
-
-                <div className="max-h-[30dvh] space-y-2 overflow-y-auto pr-1">
-                  {selectedCluster.entries.map((entry) => (
-                    <article key={entry.id} className="rounded-lg bg-white/5 p-3 flex flex-col gap-1">
-                      <p className="text-sm font-bold text-white whitespace-pre-line">{entry.organizationName || 'Untitled Organization'}</p>
+            ) : selectedEntryId ? (
+              (() => {
+                const entry = entryPoints.find(e => e.id === selectedEntryId)
+                if (!entry) return <p className="text-sm text-[#c4d0e8]">Entry not found.</p>
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-white">{entry.organizationName || 'Untitled Organization'}</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedEntryId(null)
+                          setSelectedCountry(null)
+                        }}
+                        className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-xs font-medium text-[#d9e7ff]"
+                      >
+                        <Icon icon="mdi:close" className="h-3.5 w-3.5" />
+                        Close
+                      </button>
+                    </div>
+                    <article className="rounded-lg bg-white/5 p-3 flex flex-col gap-1 overflow-y-auto max-h-[30dvh]">
                       {entry.organizationDescription && (
                         <p className="text-xs text-[#e0e0e0] italic mb-1 whitespace-pre-line">{entry.organizationDescription}</p>
                       )}
@@ -501,6 +551,43 @@ function MapPage() {
                           <span className="text-xs text-[#d9e7ff] break-all">{entry.contact}</span>
                         </div>
                       )}
+                    </article>
+                  </div>
+                )
+              })()
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-white">{selectedCountry}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedEntryId(null)
+                      setSelectedCountry(null)
+                    }}
+                    className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-xs font-medium text-[#d9e7ff]"
+                  >
+                    <Icon icon="mdi:close" className="h-3.5 w-3.5" />
+                    Close
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg  bg-white/5 p-2.5">
+                    <p className="text-[11px] text-[#c4d0e8]">Entries</p>
+                    <p className="text-sm font-semibold text-white">{compactNumber(countryMeta.get(selectedCountry!)?.count || 0)}</p>
+                  </div>
+                  <div className="rounded-lg  bg-white/5 p-2.5">
+                    <p className="text-[11px] text-[#c4d0e8]">Est. Reach</p>
+                    <p className="text-sm font-semibold text-white">{compactNumber(countryMeta.get(selectedCountry!)?.totalReach || 0)}</p>
+                  </div>
+                </div>
+
+                <div className="max-h-[30dvh] space-y-2 overflow-y-auto pr-1">
+                  {(countryMeta.get(selectedCountry!)?.entries || []).map((entry) => (
+                    <article key={entry.id} className="rounded-lg bg-white/10 p-2 flex flex-col gap-1">
+                      <span className="text-xs text-white font-semibold">{entry.organizationName || 'Untitled Organization'}</span>
+                      <span className="text-xs text-[#c4d0e8]">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
                     </article>
                   ))}
                 </div>
