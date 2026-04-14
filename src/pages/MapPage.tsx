@@ -55,6 +55,7 @@ function MapPage() {
   const navigate = useNavigate()
   const { entries, isLoading, error, reload } = useEntries()
   const [countriesGeo, setCountriesGeo] = useState({ features: [] })
+  const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
   const [globeSize, setGlobeSize] = useState({ width: 0, height: 0 })
   const [isLeaving, setIsLeaving] = useState(false)
   const pageRef = useRef<HTMLElement>(null)
@@ -329,6 +330,7 @@ function MapPage() {
                 const name = properties.NAME || properties.ADMIN
                 setSelectedCountry(name)
                 setSelectedEntryId(null)
+                setExpandedCountry(null)
               }}
               polygonLabel={(d: object) => {
                 const properties = (d as { properties: Record<string, string> }).properties;
@@ -349,6 +351,7 @@ function MapPage() {
                 const entry = point as typeof entryPoints[number]
                 setSelectedEntryId(entry.id)
                 setSelectedCountry(entry.countryName)
+                setExpandedCountry(null)
               }}
             />
           </div>
@@ -395,7 +398,7 @@ function MapPage() {
 
       <section className="pointer-events-none relative z-10 h-full px-4 pb-4 pt-36 md:px-6 md:pb-6 md:pt-40 flex flex-col justify-between">
 
-        <aside ref={sidebarRef} className="pointer-events-auto w-[285px] max-h-full overflow-hidden m-3 rounded-[20px] bg-[rgba(255,255,255,0.08)] p-5 backdrop-blur-[30px] hidden md:flex md:flex-col">
+        <aside ref={sidebarRef} className="pointer-events-auto w-[320px] max-h-full overflow-hidden m-3 rounded-[20px] bg-[rgba(255,255,255,0.08)] p-5 backdrop-blur-[30px] hidden md:flex md:flex-col">
           <div className="flex flex-col h-full overflow-hidden">
             <h2 className="mb-3 text-base font-semibold text-white">Details</h2>
             
@@ -452,15 +455,48 @@ function MapPage() {
                       
                       <div className="my-4 border-t border-white/10 shrink-0" />
                       
-                      <div className="space-y-3 overflow-y-auto flex-1 pr-1">
-                        {meta.entries.map((entry) => (
-                          entry && (
-                            <article key={entry.id} className="rounded-lg bg-white/10 p-2 flex flex-col gap-1">
-                              <span className="text-xs text-white font-semibold">{entry.organizationName || 'Untitled Organization'}</span>
-                              <span className="text-xs text-[#c4d0e8]">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
-                            </article>
-                          )
-                        ))}
+                      <div className="flex-1 overflow-hidden relative flex flex-col">
+                        <div 
+                          className={`grid grid-cols-2 gap-2 pr-1 items-start ${
+                            !expandedCountry 
+                              ? meta.entries.length > 4 
+                                ? 'max-h-[140px] overflow-hidden'
+                                : '' 
+                              : 'overflow-y-auto flex-1'
+                          }`}
+
+                          style={
+                            !expandedCountry && meta.entries.length > 4
+                              ? { 
+                                  maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
+                                  WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)'
+                                }
+                              : undefined
+                          }
+                        >
+                          {(expandedCountry ? meta.entries : meta.entries.slice(0, 6)).map((entry, idx) => (
+                            entry && (
+                              <article 
+                                key={entry.id} 
+                                className={`rounded-lg bg-white/10 p-2 flex flex-col gap-1 h-full min-h-[64px] transition-all duration-300 ${!expandedCountry && idx >= 4 ? 'blur-[1px]' : ''}`}
+                              >
+                                <span className="text-[11px] text-white font-semibold line-clamp-2 leading-tight">{entry.organizationName || 'Untitled Organization'}</span>
+                                <span className="text-[10px] text-[#c4d0e8] mt-auto">{ROLE_LABELS[entry.roleType] || entry.roleType}</span>
+                              </article>
+                            )
+                          ))}
+                        </div>
+                        
+                        {!expandedCountry && meta.entries.length > 4 && (
+                          <div className="absolute inset-x-0 bottom-0 flex justify-center pb-2 pt-12 pointer-events-none">
+                            <button
+                              onClick={() => setExpandedCountry(country)}
+                              className="pointer-events-auto px-5 py-2 rounded-full bg-[#3d6ec9] hover:bg-[#4a7ed9] text-white text-[11px] font-bold shadow-xl transition-all hover:scale-105 active:scale-95"
+                            >
+                              See More
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )
