@@ -514,12 +514,25 @@ function MapPage() {
               </div>
             </div>
 
-            <button
-              onClick={closeAbout}
-              className="mt-8 w-full py-3 rounded-2xl bg-[#B14242] hover:bg-[#8e3535] text-white font-bold transition-all shadow-lg active:scale-[0.98]"
-            >
-              Get Started
-            </button>
+            <div className="flex w-full gap-3 mt-8">
+              <button
+                onClick={closeAbout}
+                className="flex-[2] flex items-center justify-center gap-2 cursor-pointer py-3 rounded-2xl bg-[#B14242] hover:bg-[#a13b3b] text-white font-bold duration-300 transition-all shadow-lg active:scale-[0.98] border border-white/10"
+              >
+                <Icon icon="mdi:map-marker-radius" className="h-5 w-5" />
+                View Network
+              </button>
+              <Link
+                to="/input"
+                onClick={(e) => { closeAbout(); animateBackToHome(e); }}
+                className="flex-1 flex"
+              >
+                <div className="flex-grow flex items-center justify-center gap-2 text-center py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white/90 font-bold duration-300 transition-all shadow-md active:scale-[0.98] border border-white/5">
+                  <Icon icon="mdi:account-plus" className="h-5 w-5" />
+                  Join
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
       )}
