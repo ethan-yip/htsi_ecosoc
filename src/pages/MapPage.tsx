@@ -295,12 +295,14 @@ function MapPage() {
       gsap.to(logosRef.current, { x: -200, opacity: 0, scale: 0.8, duration: 0.6, ease: 'power2.inOut' })
       gsap.to(desktopMetricsRef.current, { x: 300, opacity: 0, scale: 0.8, duration: 0.6, ease: 'power2.inOut' })
       gsap.to(metricsRef.current, { y: 200, opacity: 0, scale: 0.8, duration: 0.6, ease: 'power2.inOut' })
+      gsap.to(headerRef.current, { y: -200, opacity: 0, scale: 0.8, duration: 0.6, ease: "power2.inOut"});
     } else {
       // Animate IN (return to original state)
       gsap.to(sidebarRef.current, { x: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' })
       gsap.to(logosRef.current, { x: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' })
       gsap.to(desktopMetricsRef.current, { x: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' })
       gsap.to(metricsRef.current, { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' })
+      gsap.to(headerRef.current, { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power2.out"});
     }
   }, [isFullscreen])
 
