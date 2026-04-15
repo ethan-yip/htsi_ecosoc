@@ -26,6 +26,15 @@ const CONSTRAINT_LABELS: Record<string, string> = {
   'training-skills': 'Training / Skills',
   'other': 'Other',
 };
+
+const CONSTRAINT_SOLVER_ROLES: Record<string, string[]> = {
+  'funding': ['funder-donor'],
+  'execution-capacity': ['youth-program-operator', 'school-university'],
+  'institutional-support': ['ngo-nonprofit', 'youth-program-operator', 'government-policy'],
+  'training-skills': ['school-university'],
+  'engagement': ['youth-program-operator', 'ngo-nonprofit'],
+};
+
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '@iconify/react'
 import { Link, useLocation, useNavigate } from 'react-router'
@@ -135,7 +144,6 @@ function MapPage() {
     return points;
   }, [entries]);
 
-  // For country selection, build a quick lookup
   const countryMeta = useMemo(() => {
     const map = new Map<string, { count: number; totalReach: number; entries: typeof entryPoints }>()
     for (const entry of entryPoints) {
@@ -166,6 +174,43 @@ function MapPage() {
   // Selection: either an entry (by id) or a country (by name)
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
+
+  // Show all arcs by default, but filter if an entry or country is selected
+  const networkArcs = useMemo(() => {
+    const arcs: { startLat: number; startLng: number; endLat: number; endLng: number; color: string | string[] }[] = [];
+    
+    const sourcePoints = entryPoints.filter(e => {
+      if (selectedEntryId) return e.id === selectedEntryId;
+      if (selectedCountry) {
+        if (selectedCountry === "United States of America") {
+          return e.countryName === "United States"; // shhh
+        }
+        return e.countryName === selectedCountry;
+      }
+      return true;
+    });
+
+    for (const entry of sourcePoints) {
+      const solverRoles = CONSTRAINT_SOLVER_ROLES[entry.primaryConstraint];
+      if (!solverRoles) continue;
+
+      // Find other points that can solve this entry's constraint
+      for (const other of entryPoints) {
+        if (entry.id === other.id) continue;
+
+        if (solverRoles.includes(other.roleType)) {
+          arcs.push({
+            startLat: entry.lat,
+            startLng: entry.lng,
+            endLat: other.lat,
+            endLng: other.lng,
+            color: [entry.color, other.color]
+          });
+        }
+      }
+    }
+    return arcs;
+  }, [entryPoints, selectedEntryId, selectedCountry]);
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null)
   const [globeAltitude, setGlobeAltitude] = useState(2.0)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -459,6 +504,14 @@ function MapPage() {
               onZoom={(pov) => {
                 setGlobeAltitude(pov.altitude)
               }}
+
+              arcsData={networkArcs}
+              arcColor="color"
+              arcDashLength={1}
+              arcDashGap={0}
+              arcDashAnimateTime={0}
+              arcStroke={0.25}
+              arcAltitudeAutoScale={0.3}
             />
           </div>
         )}
