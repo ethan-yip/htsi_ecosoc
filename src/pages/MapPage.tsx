@@ -1,4 +1,3 @@
-// Human-readable label maps
 const ROLE_LABELS: Record<string, string> = {
   'youth-program-operator': 'Youth Program Operator',
   'ngo-nonprofit': 'NGO / Nonprofit',
@@ -220,9 +219,18 @@ function MapPage() {
 
   // Function to handle selection updates
   const handleSelectCountry = (name: string | null) => {
+    const isDeselecting = name === null && (selectedCountry !== null || selectedEntryId !== null)
     setSelectedCountry(name)
     setSelectedEntryId(null)
     setExpandedCountry(null)
+
+    if (isDeselecting && globeRef.current) {
+      const currentPov = globeRef.current.pointOfView()
+      globeRef.current.pointOfView({
+        ...currentPov,
+        altitude: 1.9
+      }, 1000)
+    }
   }
 
   const handleSelectEntry = (id: string | null, countryName: string | null) => {
@@ -500,6 +508,9 @@ function MapPage() {
               onPointClick={(point) => {
                 const entry = point as typeof entryPoints[number]
                 handleSelectEntry(entry.id, entry.countryName)
+              }}
+              onGlobeClick={() => {
+                handleSelectCountry(null)
               }}
               onZoom={(pov) => {
                 setGlobeAltitude(pov.altitude)
