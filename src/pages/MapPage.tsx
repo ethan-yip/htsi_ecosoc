@@ -40,9 +40,10 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import Globe from 'react-globe.gl'
 import type { GlobeMethods } from 'react-globe.gl'
 import gsap from 'gsap'
-import { getEntryMetrics, FOCUS_COLOR } from '../lib/map/clusterEntries'
+import { getEntryMetrics, FOCUS_COLOR, ROLE_COLOR, CONSTRAINT_COLOR } from '../lib/map/clusterEntries'
 import { getCountryByCode, getStateByCode } from '../lib/map/countryCentroids'
 import { useEntries } from '../lib/supabase/useEntries'
+import { FilterModal, type FilterState } from '../components/FilterModal'
 
 const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson'
 
@@ -75,14 +76,65 @@ function MapPage() {
   const desktopMetricsRef = useRef<HTMLDivElement>(null)
   const mobileUIRef = useRef<HTMLDivElement>(null)
 
+  // Filter state
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState<FilterState>(() => {
+    const params = new URLSearchParams(location.search)
+    return {
+      showArcs: params.get('arcs') !== 'false',
+      colorBy: (params.get('color') as FilterState['colorBy']) || 'focus',
+      selectedCountries: params.get('countries')?.split(',').filter(Boolean) || [],
+      selectedRoles: params.get('roles')?.split(',').filter(Boolean) || [],
+      selectedConstraints: params.get('constraints')?.split(',').filter(Boolean) || [],
+      selectedFocusAreas: params.get('focus')?.split(',').filter(Boolean) || [],
+    }
+  })
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (!filters.showArcs) params.set('arcs', 'false')
+    if (filters.colorBy !== 'focus') params.set('color', filters.colorBy)
+    if (filters.selectedCountries.length > 0) params.set('countries', filters.selectedCountries.join(','))
+    if (filters.selectedRoles.length > 0) params.set('roles', filters.selectedRoles.join(','))
+    if (filters.selectedConstraints.length > 0) params.set('constraints', filters.selectedConstraints.join(','))
+    if (filters.selectedFocusAreas.length > 0) params.set('focus', filters.selectedFocusAreas.join(','))
+    
+    const newSearch = params.toString()
+    navigate({ search: newSearch ? `?${newSearch}` : '' }, { replace: true })
+  }, [filters, navigate])
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0
+    if (filters.selectedCountries.length > 0) count++
+    if (filters.selectedRoles.length > 0) count++
+    if (filters.selectedConstraints.length > 0) count++
+    if (filters.selectedFocusAreas.length > 0) count++
+    if (!filters.showArcs) count++
+    if (filters.colorBy !== 'focus') count++
+    return count
+  }, [filters])
+
   // Each entry gets a lat/lng at the country/state centroid
   // Add a small random offset to each entry's lat/lng to avoid perfect overlap
   // Type for entries with lat/lng
   type EntryWithCoords = typeof entries[number] & { lat: number; lng: number; countryName: string; stateName?: string; color: string };
   const entryPoints = useMemo<EntryWithCoords[]>(() => {
+    // Apply filters to entries
+    const filteredEntries = entries.filter(entry => {
+      if (filters.selectedRoles.length > 0 && !filters.selectedRoles.includes(entry.roleType)) return false;
+      if (filters.selectedFocusAreas.length > 0 && !filters.selectedFocusAreas.includes(entry.focusArea)) return false;
+      if (filters.selectedConstraints.length > 0 && !filters.selectedConstraints.includes(entry.primaryConstraint)) return false;
+      
+      // Country filter check
+      const country = getCountryByCode(entry.country);
+      if (filters.selectedCountries.length > 0 && country && !filters.selectedCountries.includes(country.name)) return false;
+      
+      return true;
+    });
+
     // Group entries by country + state for spiral spreading
     const grouped: Record<string, EntryWithCoords[]> = {};
-    for (const entry of entries) {
+    for (const entry of filteredEntries) {
       const key = `${entry.country}-${entry.state || 'none'}`;
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(entry as EntryWithCoords);
@@ -130,18 +182,23 @@ function MapPage() {
         const radius = minSpiralRadius + (maxSpiralRadius - minSpiralRadius) * Math.sqrt(i / Math.max(1, n - 1));
         const dLat = Math.cos(angle) * radius;
         const dLng = Math.sin(angle) * radius;
+
+        let color = FOCUS_COLOR[entry.focusArea];
+        if (filters.colorBy === 'role') color = ROLE_COLOR[entry.roleType] || ROLE_COLOR['other'];
+        if (filters.colorBy === 'constraint') color = CONSTRAINT_COLOR[entry.primaryConstraint] || CONSTRAINT_COLOR['other'];
+
         points.push({ 
           ...entry, 
           lat: lat + dLat, 
           lng: lng + dLng, 
           countryName: country.name,
           stateName,
-          color: FOCUS_COLOR[entry.focusArea]
+          color
         });
       }
     }
     return points;
-  }, [entries]);
+  }, [entries, filters]);
 
   const countryMeta = useMemo(() => {
     const map = new Map<string, { count: number; totalReach: number; entries: typeof entryPoints }>()
@@ -168,7 +225,17 @@ function MapPage() {
     return map
   }, [entryPoints])
 
-  const metrics = useMemo(() => getEntryMetrics(entries), [entries])
+  const metrics = useMemo(() => {
+    const filteredEntries = entries.filter(entry => {
+      if (filters.selectedRoles.length > 0 && !filters.selectedRoles.includes(entry.roleType)) return false;
+      if (filters.selectedFocusAreas.length > 0 && !filters.selectedFocusAreas.includes(entry.focusArea)) return false;
+      if (filters.selectedConstraints.length > 0 && !filters.selectedConstraints.includes(entry.primaryConstraint)) return false;
+      const country = getCountryByCode(entry.country);
+      if (filters.selectedCountries.length > 0 && country && !filters.selectedCountries.includes(country.name)) return false;
+      return true;
+    });
+    return getEntryMetrics(filteredEntries);
+  }, [entries, filters]);
 
   // Selection: either an entry (by id) or a country (by name)
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
@@ -176,6 +243,8 @@ function MapPage() {
 
   // Show all arcs by default, but filter if an entry or country is selected
   const networkArcs = useMemo(() => {
+    if (!filters.showArcs) return [];
+
     const arcs: { startLat: number; startLng: number; endLat: number; endLng: number; color: string | string[] }[] = [];
     
     const sourcePoints = entryPoints.filter(e => {
@@ -443,6 +512,14 @@ function MapPage() {
 
   return (
     <main ref={pageRef} className="relative h-dvh overflow-hidden bg-[#3a0000] text-white">
+      <FilterModal
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        filters={filters}
+        setFilters={setFilters}
+        labels={{ ROLE_LABELS, FOCUS_LABELS, CONSTRAINT_LABELS }}
+        countries={Array.from(new Set(entries.map(e => getCountryByCode(e.country)?.name).filter(Boolean))) as string[]}
+      />
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(128,0,32,0.28),transparent_45%),radial-gradient(circle_at_80%_75%,rgba(90,0,25,0.22),transparent_40%),linear-gradient(180deg,rgba(8,13,24,0.82),rgba(8,13,24,0.92))]" />
       </div>
@@ -538,14 +615,30 @@ function MapPage() {
           <Icon icon={isFullscreen ? "mdi:fullscreen-exit" : "mdi:fullscreen"} className="h-6 w-6" />
         </button>
 
-        <button
-          type="button"
-          onClick={() => setShowAbout(true)}
-          className="absolute right-6 top-6 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
-          title="About ECOSOC"
-        >
-          <Icon icon="mdi:help-circle-outline" className="h-6 w-6" />
-        </button>
+        <div className="absolute right-6 top-6 z-30 flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={() => setShowFilters(true)}
+            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
+            title="Filters"
+          >
+            <Icon icon="mdi:filter-variant" className="h-6 w-6" />
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#B14242] text-[10px] font-bold text-white shadow-lg">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => setShowAbout(true)}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
+            title="About ECOSOC"
+          >
+            <Icon icon="mdi:help-circle-outline" className="h-6 w-6" />
+          </button>
+        </div>
       </div>
 
       {showAbout && (
@@ -743,14 +836,25 @@ function MapPage() {
             </div>
 
             <div className="mt-6 pt-4 border-t border-white/10 space-y-2 shrink-0">
-              <p className="text-[10px] font-bold text-[#b8c5df] uppercase tracking-wider">Legend (Focus Area)</p>
+              <p className="text-[10px] font-bold text-[#b8c5df] uppercase tracking-wider">
+                Legend ({filters.colorBy === 'focus' ? 'Focus Area' : filters.colorBy === 'role' ? 'Role Type' : 'Constraint'})
+              </p>
               <div className="grid grid-cols-1 gap-1.5">
-                {Object.entries(FOCUS_LABELS).map(([id, label]) => (
-                  <div key={id} className="flex items-center gap-2 text-[11px] text-[#e0ced1]">
-                    <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: FOCUS_COLOR[id as keyof typeof FOCUS_COLOR] }} />
-                    <span>{label}</span>
-                  </div>
-                ))}
+                {Object.entries(
+                  filters.colorBy === 'focus' ? FOCUS_LABELS : 
+                  filters.colorBy === 'role' ? ROLE_LABELS : 
+                  CONSTRAINT_LABELS
+                ).map(([id, label]) => {
+                  const color = filters.colorBy === 'focus' ? FOCUS_COLOR[id as keyof typeof FOCUS_COLOR] :
+                                filters.colorBy === 'role' ? ROLE_COLOR[id] :
+                                CONSTRAINT_COLOR[id];
+                  return (
+                    <div key={id} className="flex items-center gap-2 text-[11px] text-[#e0ced1]">
+                      <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                      <span>{label}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -796,24 +900,49 @@ function MapPage() {
               <Icon icon={isFullscreen ? "mdi:fullscreen-exit" : "mdi:fullscreen"} className="h-6 w-6" />
             </button>
 
-            <button
-              type="button"
-              onClick={() => setShowAbout(true)}
-              className="z-100 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
-              title="About ECOSOC"
-            >
-              <Icon icon="mdi:help-circle-outline" className="h-6 w-6" />
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowFilters(true)}
+                className="relative z-100 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
+                title="Filters"
+              >
+                <Icon icon="mdi:filter-variant" className="h-6 w-6" />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#B14242] text-[8px] font-bold text-white shadow-lg">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setShowAbout(true)}
+                className="z-100 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.08)] text-white backdrop-blur-[18px] transition-all hover:bg-white/20 active:scale-95"
+                title="About ECOSOC"
+              >
+                <Icon icon="mdi:help-circle-outline" className="h-6 w-6" />
+              </button>
+            </div>
           </div>
 
           {/* Mobile Legend - Always visible on mobile, above metrics if bottom bar closed */}
           <div className="mb-3 flex w-[calc(100vw-24px)] max-w-[560px] flex-wrap justify-center gap-x-3 gap-y-1.5 rounded-[15px] bg-[rgba(255,255,255,0.08)] p-3 backdrop-blur-[18px]">
-            {Object.entries(FOCUS_LABELS).map(([id, label]) => (
-              <div key={id} className="flex items-center gap-1.5 text-[10px] text-[#e0ced1]">
-                <div className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: FOCUS_COLOR[id as keyof typeof FOCUS_COLOR] }} />
-                <span>{label}</span>
-              </div>
-            ))}
+            {Object.entries(
+              filters.colorBy === 'focus' ? FOCUS_LABELS : 
+              filters.colorBy === 'role' ? ROLE_LABELS : 
+              CONSTRAINT_LABELS
+            ).map(([id, label]) => {
+              const color = filters.colorBy === 'focus' ? FOCUS_COLOR[id as keyof typeof FOCUS_COLOR] :
+                            filters.colorBy === 'role' ? ROLE_COLOR[id] :
+                            CONSTRAINT_COLOR[id];
+              return (
+                <div key={id} className="flex items-center gap-1.5 text-[10px] text-[#e0ced1]">
+                  <div className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                  <span>{label}</span>
+                </div>
+              );
+            })}
           </div>
 
           <div

@@ -12,6 +12,25 @@ export const FOCUS_COLOR: Record<FocusArea, string> = {
    'other': '#a0a0a0',
 }
 
+export const ROLE_COLOR: Record<string, string> = {
+  'youth-program-operator': '#ff7f50',
+  'ngo-nonprofit': '#6a5acd',
+  'school-university': '#20b2aa',
+  'startup-builder': '#db7093',
+  'government-policy': '#4682b4',
+  'funder-donor': '#ffd700',
+  'other': '#a0a0a0',
+};
+
+export const CONSTRAINT_COLOR: Record<string, string> = {
+  'funding': '#e57373',
+  'execution-capacity': '#81c784',
+  'engagement': '#64b5f6',
+  'institutional-support': '#ffb74d',
+  'training-skills': '#ba68c8',
+  'other': '#a0a0a0',
+};
+
 export interface CountryCluster {
   country: string
   state?: string
