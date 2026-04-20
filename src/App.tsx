@@ -1,5 +1,4 @@
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router'
-import InputPage from './pages/InputPage'
 import MapPage from './pages/MapPage'
 
 import "@fontsource-variable/roboto/wght.css";

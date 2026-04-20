@@ -36,7 +36,7 @@ const CONSTRAINT_SOLVER_ROLES: Record<string, string[]> = {
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '@iconify/react'
-import { Link, useLocation, useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import Globe from 'react-globe.gl'
 import type { GlobeMethods } from 'react-globe.gl'
 import gsap from 'gsap'
@@ -65,7 +65,7 @@ function MapPage() {
   const [countriesGeo, setCountriesGeo] = useState({ features: [] })
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
   const [globeSize, setGlobeSize] = useState({ width: 0, height: 0 })
-  const [isLeaving, setIsLeaving] = useState(false)
+  // const [isLeaving, setIsLeaving] = useState(false)
   const pageRef = useRef<HTMLElement>(null)
   const globeRef = useRef<GlobeMethods | undefined>(undefined)
   const headerRef = useRef<HTMLDivElement>(null)
@@ -324,50 +324,50 @@ function MapPage() {
     setSelectedCountry(null)
   }
 
-  const animateBackToHome = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault()
+  // const animateBackToHome = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  //   event.preventDefault()
 
-    if (isLeaving) {
-      return
-    }
+  //   if (isLeaving) {
+  //     return
+  //   }
 
-    setIsLeaving(true)
+  //   setIsLeaving(true)
 
-    const timeline = gsap.timeline({
-      onComplete: () => {
-        navigate('/input', { state: { fromMap: true } })
-      },
-    })
+  //   const timeline = gsap.timeline({
+  //     onComplete: () => {
+  //       navigate('/input', { state: { fromMap: true } })
+  //     },
+  //   })
 
-    timeline
-      .to([sidebarRef.current, metricsRef.current], {
-        x: -18,
-        opacity: 0,
-        duration: 0.3,
-        ease: 'power2.inOut',
-        stagger: 0.06,
-      })
-      .to(
-        headerRef.current,
-        {
-          y: -24,
-          opacity: 0,
-          duration: 0.28,
-          ease: 'power2.inOut',
-        },
-        '<',
-      )
-      .to(
-        globeContainerRef.current,
-        {
-          scale: 0.94,
-          opacity: 0,
-          duration: 0.38,
-          ease: 'power2.inOut',
-        },
-        '-=0.1',
-      )
-  }
+  //   timeline
+  //     .to([sidebarRef.current, metricsRef.current], {
+  //       x: -18,
+  //       opacity: 0,
+  //       duration: 0.3,
+  //       ease: 'power2.inOut',
+  //       stagger: 0.06,
+  //     })
+  //     .to(
+  //       headerRef.current,
+  //       {
+  //         y: -24,
+  //         opacity: 0,
+  //         duration: 0.28,
+  //         ease: 'power2.inOut',
+  //       },
+  //       '<',
+  //     )
+  //     .to(
+  //       globeContainerRef.current,
+  //       {
+  //         scale: 0.94,
+  //         opacity: 0,
+  //         duration: 0.38,
+  //         ease: 'power2.inOut',
+  //       },
+  //       '-=0.1',
+  //     )
+  // }
 
   useLayoutEffect(() => {
     const timeline = gsap.timeline()
