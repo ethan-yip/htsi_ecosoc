@@ -9,10 +9,10 @@ const router = createBrowserRouter([
     path: '/',
     element: <MapPage />,
   },
-  {
-    path: '/input',
-    element: <InputPage />,
-  },
+  // {
+  //   path: '/input',
+  //   element: <InputPage />,
+  // },
   {
     path: '*',
     element: <Navigate to='/' replace />,

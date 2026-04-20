@@ -679,7 +679,7 @@ function MapPage() {
                 <Icon icon="mdi:map-marker-radius" className="h-5 w-5" />
                 View Network
               </button>
-              <Link
+              {/* <Link
                 to="/input"
                 onClick={(e) => { closeAbout(); animateBackToHome(e); }}
                 className="flex-1 flex"
@@ -688,18 +688,18 @@ function MapPage() {
                   <Icon icon="mdi:account-plus" className="h-5 w-5" />
                   Join
                 </div>
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
       )}
 
-      <div ref={headerRef} className="absolute left-1/2 top-5 z-20 w-[min(488px,calc(100%-1.5rem))] -translate-x-1/2 rounded-[25px] bg-[rgba(255,255,255,0.08)] p-[12px] backdrop-blur-[18px] md:top-8 md:w-[min(488px,calc(100%-2rem))] md:p-[15px]">
-        <div className="relative mb-[5px] flex min-h-10 items-center justify-center md:min-h-0">
+      <div ref={headerRef} className="absolute left-1/2 top-5 z-20 w-fit -translate-x-1/2 rounded-[25px] bg-[rgba(255,255,255,0.08)] p-[12px] backdrop-blur-[18px] md:top-8 md:p-3">
+        <div className="relative flex min-h-10 items-center justify-center md:min-h-0">
           <h1 className="text-center rounded-[10px] px-5 py-2 text-lg font-bold text-white md:text-[20px]">ECOSOC Youth Innovation Systems Map</h1>
         </div>
 
-        <div className="grid grid-cols-2 rounded-[35px] bg-[rgba(255,255,255,0.1)] p-[2px]">
+        {/* <div className="grid grid-cols-2 rounded-[35px] bg-[rgba(255,255,255,0.1)] p-[2px]">
           <div className="flex h-9 items-center justify-center gap-2 rounded-[20px] bg-[rgba(255,255,255,0.1)] text-sm font-bold text-white">
             <Icon icon="mdi-light:map-marker" className="h-[22px] w-[22px]" />
             <span>Map</span>
@@ -712,7 +712,7 @@ function MapPage() {
             <Icon icon="mdi:list-box-outline" className="h-[22px] w-[22px]" />
             <span>Input View</span>
           </Link>
-        </div>
+        </div> */}
       </div>
 
       <section 
